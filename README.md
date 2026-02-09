@@ -6,16 +6,15 @@ User Behavior Analysis for Streaming Platforms
 ## Project Type
 - Create a tool
 
-## Questions of interest:
-- Determining Netflix retention based on watch history, search logs, recommendations, reviews, user info
-
 ## Questions of interest
+- Determining Netflix retention based on watch history, search logs, recommendations, reviews, user info
 - Which customers are higher risk of cancelling?
 - Which customers should receive a retention offer?
   
 ## Goal:
 - Create a visual tool that easily answers potential business questions above:
 - Work with large, messy data and understand its tradeoff
+- We will start from analyzing user behavior with Netflix data, and if possible, compare subscriptions and movies/shows with different platforms
 
 ## Data Sources
 ### Subscription Data

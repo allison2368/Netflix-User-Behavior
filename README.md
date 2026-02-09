@@ -26,3 +26,6 @@ User Behavior Analysis for Streaming Platforms
 - Netflix: https://www.kaggle.com/datasets/shivamb/netflix-shows
 - Hulu: https://www.kaggle.com/datasets/thedevastator/hulu-popular-shows-dataset
 - Amazon Prime: https://www.kaggle.com/datasets/shivamb/amazon-prime-movies-and-tv-shows
+
+### User Behavior Data 
+- Netflix: https://www.kaggle.com/datasets/sayeeduddin/netflix-2025user-behavior-dataset-210k-records/data?select=watch_history.csv 

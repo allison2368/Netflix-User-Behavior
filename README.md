@@ -16,6 +16,13 @@ User Behavior Analysis for Streaming Platforms
 - Work with large, messy data and understand its tradeoff
 - We will start from analyzing user behavior with Netflix data, and if possible, compare subscriptions and movies/shows with different platforms
 
+#### Specific goals for Churn Analysis:
+- Define the Churn Event: Determine what constitutes a churned user (e.g., cancellation of subscription, non-renewal).
+- Calculate the Rate: Calculate the percentage of customers lost over a specific period
+- Segment Customer Data: Group customers by behavior, demographics, or subscription type to identify which groups are leaving.
+- Identify Patterns: Analyze usage data for trends, such as declining activity or lack of product engagement.
+- Act on Insights: Create targeted campaigns or product improvements to address the specific reasons for attrition. 
+
 ## Data Sources
 ### Subscription Data
 - Netflix: https://www.kaggle.com/datasets/sureshmuthusamy001p/netflix-customer-subscription

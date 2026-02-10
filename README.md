@@ -4,7 +4,7 @@ User Behavior Analysis for Streaming Platforms
 ## Allison Peng, Urvashi Jha, Fatima Fazil, Saeah Go
 
 ## Project Type
-- Create a tool
+- Create a business visualization tool
 
 ## Questions of interest
 - Determining Netflix retention based on watch history, search logs, recommendations, reviews, user info

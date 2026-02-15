@@ -50,30 +50,29 @@ Marcus clicks on "Churn Drivers" chart which highlights top risk factors, exampl
 - No content watched in the last 10 days
 - Declining weekly engagement trend
 **Step 3: Simulate the discount impact**
-Simulating Financial impact
-Marcus selects "Simulate offer". He inputs 5% discount, duration= 3 months. The dashboard calculates total cost of discount, revenue retained under varying save-rate scenarios and break-even retention.
-**Step 4:** 
+He inputs 5% discount, duration= 3 months. The dashboard calculates total cost of discount, revenue retained under varying save-rate scenarios and break-even retention.
+**Step 4: Act on the segment** 
 Marcus clicks "Export segment". The dashboard pushes the filtered cohort into the Netflix email automation platform. 
 
 **Use case 2: Optimizing content investment Using movie ratings**
-Actor : Sarah, Studio executive
-Goal : Decide whether investing in higher-rated content( 8+ IMDb) produces better long-term retention than increasing content volume.
+**Actor** : Sarah, Studio executive
+**Objective** : Decide whether investing in higher-rated content( 8+ IMDb) produces better long-term retention than increasing content volume.
+**Step 1: Identify at-rish, high-valued viewers**
+Sarah filters the dashboard for users that are :
+- In the top 20% lifetime value
+- Active in the last 60 days
+The dashboard highhlights:
+- Revenue exposure
+- % users that watch high-quality content (7.8+ ratings)
+**Step 2: Analyze content quality impact**
+Sarah views Quality Elasticity Chart showing:
+- Churn prob. by IMDB rating bucket
+- Completion rate by rating tier (Did users watch it all?)
+- Post-completion retention window (How long do they stick around?)
 
-Step 1: Identifying at risk viewers
-Sarah opnens "Content and retention" tab.
-She filters for:
-- top 40% lifetime value users
-- moderate churn prob. (0.5-0.7)
--Active in the last 60 days
-The dashboard shows:
-- $6M in quarterly revenue exposure
--65% watches content 7.8 + on IMDB
--Users who primarily watch content below 6.5 churn 2X faster
-Step 2: Sarah switches to quality elasticity viz
-The chart shows:
-Average churn prob. by IMDb rating bucket
-Completion rate by rating tier
-Post-completion retention window.
+These metrics will help Sarah whether to invest in highly rated content.
+
+
 
 
 

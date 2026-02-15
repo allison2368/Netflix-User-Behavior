@@ -1,0 +1,7 @@
+# Ignore local data files
+data/
+
+# zip files
+*.zip
+
+kaggle.json

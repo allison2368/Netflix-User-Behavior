@@ -4,7 +4,10 @@ import json
 from time import sleep
 import os
 
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 221205e (Remove hardcoded API key and use environment variable)
 API_KEY = os.getenv("API_KEY")
 
 # movie_name = "Squid Game"

@@ -1,3 +1,5 @@
+# Functional Specification
+
 ### **Background**
 Build an automated pipeline that identifies high-risk subscribers using watch history, search logs and recommendation interaction.
 
@@ -6,21 +8,21 @@ Build an automated pipeline that identifies high-risk subscribers using watch hi
 **Profile 1**: Product Manager (Puja)
 **Role**: Feature Strategist
 **Goal**: Ensure retention features are integrated into the UI
-**Domain and computing knowlege**: Moderate
+**Domain and computing knowledge**: Moderate
 **Primary View**: Feature usage heatmap
 
 
 **Profile 2**: Marketing Manager (Marcus)
 **Role**: Campaign strategist
 **Goal**: Design and deploy retention offers to the right customers
-**Domain and computing knowlege**: Technically proficient in using BI tools (Power BI, Tableau). Can interact with complex filters and export CSVs but cannot write SQL or Python code.
+**Domain and computing knowledge**: Technically proficient in using BI tools (Power BI, Tableau). Can interact with complex filters and export CSVs but cannot write SQL or Python code.
 **Primary view**: Risk Segment list
 
 
 **Profile 3**: Content Acquisition/Studio executive (Sarah)
 **Role**: track ROI of the library
 **Goal**: Renewing or cancelling TV shows
-**Domain and computing knowlege**: High domain expertise in content ROI but minimal computing knowledge. Requires a simplified, high-level graphical interface with one-click insights.
+**Domain and computing knowledge**: High domain expertise in content ROI but minimal computing knowledge. Requires a simplified, high-level graphical interface with one-click insights.
 **Primary View**: Title performance matrix
 
 

@@ -13,9 +13,9 @@ This component handles all raw data ingestion, cleaning, and aggregation. It is 
 ## 2. Analytics & Prediction Engine
 This component is the brain of the system. It processes the featured data to generate intelligence, such as risk scores and business simulations. 
 - What it does:
-- Churn Prediction: Trains and evaluates models to predict which users are likely to cancel their subscription. This component includes model training, selection, fine-tuning, and evaluation. Provides insight into which features most likely influence business decisions.
-- User Segmentation: Groups users into risk-based or behavior-based clusters for clear analysis and decision-making. Segmentation can be based on behavior, engagement patterns, plan type, geography etc. Can aid in early detection of high-risk users.
-- Retention Simulation: Calculates the financial impact of business decisions such as discount offers or content investments. 
+	- Churn Prediction: Trains and evaluates models to predict which users are likely to cancel their subscription. This component includes model training, selection, fine-tuning, and evaluation. Provides insight into which features most likely influence business decisions.
+	- User Segmentation: Groups users into risk-based or behavior-based clusters for clear analysis and decision-making. Segmentation can be based on behavior, engagement patterns, plan type, geography etc. Can aid in early detection of high-risk users.
+	- Retention Simulation: Calculates the financial impact of business decisions such as discount offers or content investments. 
 - **Inputs:** Featured tables from the Data Manager. 
 - **Outputs:** Churn probabilities, User segments with risk scores, analysing patterns driving churn, data-driven recommendations, Model performance metrics (accuracy, recall, F1-score), Predicted retention outcomes, estimated cost/revenue impact.
 
@@ -28,3 +28,8 @@ This component involves creating interactive dashboards (front-end component) ta
 	- User Interaction Handling: Processes filters (e.g., slider adjustments, region filtering), and handles file exports (CSVs)
 - **Inputs:** Analyzed metrics from Analytics & Prediction Engine.
 - **Outputs:** Interactive dashboard with plots, filtered tables, tooltips, and exported CSV files.
+
+![Interaction Diagrams](image.png)
+
+
+

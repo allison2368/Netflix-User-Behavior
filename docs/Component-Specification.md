@@ -29,7 +29,15 @@ This component involves creating interactive dashboards (front-end component) ta
 - **Inputs:** Analyzed metrics from Analytics & Prediction Engine.
 - **Outputs:** Interactive dashboard with plots, filtered tables, tooltips, and exported CSV files.
 
-![Interaction Diagrams](image.png)
+# Component Diagrams
+
+![Use Case 1](Images/Image1.jpeg)
+
+![Use Case 2](Images/Image2.jpeg)
+
+![Use Case 3](Images/Image3.jpeg)
+
+
 
 
 

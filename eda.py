@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 # print all rows and column 
@@ -60,5 +61,20 @@ reviews = dfs["reviews"]
 rec_logs = dfs["rec_logs"]
 movies = dfs["movies"]
 
-print("\nSample movies:")
-print(movies.head())
+# ------------------------------
+# Create cleaned folder
+# ------------------------------
+output_dir = "data/cleaned"
+os.makedirs(output_dir, exist_ok=True) # If no folder, create one. Otherwise skip making
+
+# ------------------------------
+# Make each ef as csv
+# ------------------------------
+print("\n===== Saving Cleaned Data =====")
+
+for name, df in dfs.items():
+    output_path = os.path.join(output_dir, f"{name}.csv")
+    df.to_csv(output_path, index=False)
+    print(f"Saved: {output_path} ({len(df)} rows)")
+
+print("\nall data saved in 'data/cleaned/' folder")

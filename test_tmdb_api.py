@@ -1,73 +1,55 @@
+import os
+import json
 import requests
 import pandas as pd
-import json
 from time import sleep
-import os
+from dotenv import load_dotenv
 
-API_KEY = os.getenv("API_KEY")
+load_dotenv()
 
-# movie_name = "Squid Game"
+API_KEY = os.getenv("TMDb_API_KEY")
 
-# url = "https://api.themoviedb.org/3/search/movie"
-# params = { "api_key": API_KEY, "query": movie_name, "language": "ko-KR" }
-
-# print("--- API connection test ---")
-# response = requests.get(url, params=params)
-
-# if response.status_code == 200:
-#     data = response.json()
-#     if data["results"]: 
-#         first_movie = data["results"][0]
-#         print("successful data pull!")
-#         print("title:", first_movie["title"])
-#         print("ratings:", first_movie["vote_average"]) 
-#         print("released date:", first_movie["release_date"]) 
-#     else: 
-#         print("no result.") 
-# else: 
-#     print("error:", response.status_code)
-
-
-movies = pd.read_csv("data/movies.csv")
+movies = pd.read_csv("data/cleaned/movies.csv")
 
 tmdb_ratings = []
 
 for idx, row in movies.iterrows():
     movie_name = row['title']
-    movie_year = row['release_year']
+    movie_year = str(row['release_year'])
     
-    url = "https://api.themoviedb.org/3/search/movie"
+    # Use search/multi (include movie + TV shows both)
+    url = "https://api.themoviedb.org/3/search/multi"
     params = {
         "api_key": API_KEY,
         "query": movie_name,
-        "year": movie_year 
     }
     
     response = requests.get(url, params=params)
     
     if response.status_code == 200:
         data = response.json()
-        if data["results"]:
-            # if release_date is not null, compare only with year
-            matched = None
-            for movie in data["results"]:
-                release_date = movie.get("release_date", "")
-                if release_date and release_date[:4] == str(movie_year):
-                    matched = movie
+        results = data.get("results", [])
+        
+        matched = None
+        if results:
+            for item in results:
+                # Use release_date for movies, first_air_date for TV shows 
+                target_date = item.get("release_date") or item.get("first_air_date")
+                
+                if target_date and target_date[:4] == movie_year:
+                    matched = item
                     break
-            if matched is None:
-                matched = data["results"][0]  # fallback
             
-            tmdb_ratings.append(matched["vote_average"])
+            # If cannot find matching year, just use the first result 
+            if not matched:
+                matched = results[0]
+            
+            tmdb_ratings.append(matched.get("vote_average"))
         else:
             tmdb_ratings.append(None)
-    else:
-        print("Error:", response.status_code)
-        tmdb_ratings.append(None)
-    
     sleep(0.25)  # to prevent the API rate limit
 
 movies["tmdb_rating"] = tmdb_ratings
 print(movies)
 
-movies.to_csv("data/movies_with_tmdb_rating.csv", index=False)
+movies.to_csv("data/movies_with_external_rating.csv", index=False)

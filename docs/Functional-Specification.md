@@ -12,13 +12,14 @@ Build an automated pipeline that identifies high-risk subscribers using watch hi
 **Profile 2**: Marketing Manager (Marcus)
 **Role**: Campaign strategist
 **Goal**: Design and deploy retention offers to the right customers
-**Domain and computing knowlege**: Moderate
+**Domain and computing knowlege**: Technically proficient in using BI tools (Power BI, Tableau). Can interact with complex filters and export CSVs but cannot write SQL or Python code.
 **Primary view**: Risk Segment list
 
 **Profile 3**: Content Acquisition/Studio executive (Sarah)
 **Role**: track ROI of the library
 **Goal**: Renewing or cancelling TV shows
-**Domain and computing knowlege**: Domain knowledge high and computing knowledge Low
+**Domain and computing knowlege**: High domain expertise in content ROI but minimal computing knowledge. Requires a simplified, high-level graphical interface with one-click insights.
+
 **Primary View**: Title performance matrix
 
 ### Data Sources
@@ -40,37 +41,45 @@ It has 6 interconnected tables.
 **Use Case 1: Discount Simulation**
 **Actor** : Marcus
 **Objective**: Evaluate whether a 5% discount to high-risk subscribers generates a positive return
-**Step 1: Identify high risk users**
-Marcus navigates to churn prob. slider, filters users with P(churn) > 0.85
-The dashboard dynamically recalculates key metrics and shows:
-- Total users in the segment
-- Average monthly subscription value
-**Step 2: Understand why users might churn**
-Marcus clicks on "Churn Drivers" chart which highlights top risk factors, examples: 
-- No content watched in the last 10 days
-- Declining weekly engagement trend
-**Step 3: Simulate the discount impact**
-He inputs 5% discount, duration= 3 months. The dashboard calculates total cost of discount, revenue retained under varying save-rate scenarios and break-even retention.
-**Step 4: Act on the segment** 
-Marcus clicks "Export segment". The dashboard pushes the filtered cohort into the Netflix email automation platform. 
+
+**Step 1:** User - Marcus sets the “Churn Probability” slider threshold to > 85% on the dashboard UI.
+
+**Step 2:** System (Data Manager) - Queries the preprocessed watch_history and users tables to filter IDs meeting the threshold.
+
+**Step 3:** System (Analytics & Prediction Engine) - Calculates the “Total Revenue at Risk” based on the filtered segment’s monthly subscription fees.
+
+**Step 4:** User - clicks the “Export Segment” button
+
+**Step 5:** System (Visualization & Interaction Manager) - Generates a CSV file containing the filtered user list, ready for marketing automation integration.
+
 
 **Use case 2: Optimizing content investment Using movie ratings**
 **Actor** : Sarah, Studio executive
 **Objective** : Decide whether investing in higher-rated content( 8+ IMDb) produces better long-term retention than increasing content volume.
-**Step 1: Identify at-risk, high-valued viewers**
-Sarah filters the dashboard for users that are :
-- In the top 20% lifetime value
-- Active in the last 60 days
-The dashboard highlights:
-- Revenue exposure
-- % users that watch high-quality content (7.8+ ratings)
-**Step 2: Analyze content quality impact**
-Sarah views Quality Elasticity Chart showing:
-- Churn prob. by IMDB rating bucket
-- Completion rate by rating tier (Did users watch it all?)
-- Post-completion retention window (How long do they stick around?)
+**Step 1**: User - Sarah filters the dashboard for users in the top 20% lifetime value and active in the last 60 days.**
 
-These metrics will help Sarah whether to invest in highly rated content.
+**Step 2:** System (Data Manager) - Joins `users.csv` and `watch_history.csv` to isolate the cohort and calculates “Revenue Exposure”.
+
+**Step 3:** System (Visualization & Interaction Manager) - Renders the "Quality Elasticity Chart” by correlating IMDB ratings (in movies.csv) with user completion rates. 
+
+**Step 4:** User - Sarah clicks on a specific rating bucket (e.g., 8.0+) to see which title drives the longest retention window. 
+
+**Step 5:** System (Visualization & Interaction Manager) - Displays a detailed performance matrix of content metadata and user sentiment scores from reviews.csv. 
+
+**Use case 3: Feature Engagement vs. Churn Correlation Analysis**
+**Actor** : Puja (Product Manager)
+**Objective** : Identify underperforming platform features causing user frustration.
+**Step 1:** User - Puja selects the “Feature Engagement” tab and filters by “Search Logs”.
+
+**Step 2:** System (Data Manager) - joins search_logs.csv and recommendation_logs.csv to calculate the “Null Search Rate” (searches with no clicks)
+
+**Step 3:** System (Visualization & Interaction Manager) - displays a heatmap of features with the highest drop-off rates
+
+**Step 4:** User - Puja hover over a specific hotspot (high drop-off area) on the heatmap. 
+
+**Step 5:** System (Visualization & Interaction Manager) - Displays a tooltip showing the top 5 failed search queries associated with that feature.
+
+
 
 
 

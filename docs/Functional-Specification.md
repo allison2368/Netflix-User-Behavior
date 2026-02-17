@@ -4,21 +4,35 @@ Build an automated pipeline that identifies high-risk subscribers using watch hi
 
 ### **User profiles** 
 **Profile 1**: Product Manager (Puja)
+
 **Role**: Feature Strategist
+
 **Goal**: Ensure retention features are integrated into the UI
+
 **Domain and computing knowlege**: Moderate
+
 **Primary View**: Feature usage heatmap
 
+
+
 **Profile 2**: Marketing Manager (Marcus)
+
 **Role**: Campaign strategist
+
 **Goal**: Design and deploy retention offers to the right customers
+
 **Domain and computing knowlege**: Technically proficient in using BI tools (Power BI, Tableau). Can interact with complex filters and export CSVs but cannot write SQL or Python code.
+
 **Primary view**: Risk Segment list
+
 
 **Profile 3**: Content Acquisition/Studio executive (Sarah)
 **Role**: track ROI of the library
+
 **Goal**: Renewing or cancelling TV shows
-**Domain and computing knowlege**: High domain expertise in content ROI but minimal computing knowledge. Requires a simplified, high-level graphical interface with one-click insights.
+
+**Domain and computing knowlege**: High domain expertise in content ROI but minimal
+ computing knowledge. Requires a simplified, high-level graphical interface with one-click insights.
 
 **Primary View**: Title performance matrix
 
@@ -39,7 +53,9 @@ It has 6 interconnected tables.
 
 ### Use Cases 
 **Use Case 1: Discount Simulation**
+
 **Actor** : Marcus
+
 **Objective**: Evaluate whether a 5% discount to high-risk subscribers generates a positive return
 
 **Step 1:** User - Marcus sets the “Churn Probability” slider threshold to > 85% on the dashboard UI.
@@ -54,8 +70,11 @@ It has 6 interconnected tables.
 
 
 **Use case 2: Optimizing content investment Using movie ratings**
+
 **Actor** : Sarah, Studio executive
+
 **Objective** : Decide whether investing in higher-rated content( 8+ IMDb) produces better long-term retention than increasing content volume.
+
 **Step 1**: User - Sarah filters the dashboard for users in the top 20% lifetime value and active in the last 60 days.**
 
 **Step 2:** System (Data Manager) - Joins `users.csv` and `watch_history.csv` to isolate the cohort and calculates “Revenue Exposure”.
@@ -66,9 +85,13 @@ It has 6 interconnected tables.
 
 **Step 5:** System (Visualization & Interaction Manager) - Displays a detailed performance matrix of content metadata and user sentiment scores from reviews.csv. 
 
+
+
 **Use case 3: Feature Engagement vs. Churn Correlation Analysis**
 **Actor** : Puja (Product Manager)
+
 **Objective** : Identify underperforming platform features causing user frustration.
+
 **Step 1:** User - Puja selects the “Feature Engagement” tab and filters by “Search Logs”.
 
 **Step 2:** System (Data Manager) - joins search_logs.csv and recommendation_logs.csv to calculate the “Null Search Rate” (searches with no clicks)

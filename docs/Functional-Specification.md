@@ -57,11 +57,11 @@ Marcus clicks "Export segment". The dashboard pushes the filtered cohort into th
 **Use case 2: Optimizing content investment Using movie ratings**
 **Actor** : Sarah, Studio executive
 **Objective** : Decide whether investing in higher-rated content( 8+ IMDb) produces better long-term retention than increasing content volume.
-**Step 1: Identify at-rish, high-valued viewers**
+**Step 1: Identify at-risk, high-valued viewers**
 Sarah filters the dashboard for users that are :
 - In the top 20% lifetime value
 - Active in the last 60 days
-The dashboard highhlights:
+The dashboard highlights:
 - Revenue exposure
 - % users that watch high-quality content (7.8+ ratings)
 **Step 2: Analyze content quality impact**

@@ -5,3 +5,6 @@ data/
 *.zip
 
 kaggle.json
+
+.env
+

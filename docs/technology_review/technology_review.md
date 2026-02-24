@@ -183,3 +183,7 @@ In the simple demo, we were able to do the same tasks with 100 lines of code wit
 ## 4.4 Drawbacks and Concerns
 
 One concern at this stage is that, due to Streamlit’s limited layout control, we may face challenges expanding the project in the future, particularly outside of a class project and in a production environment.
+
+## 4.5 Demo Video
+
+The demo video is available in the demo folder.

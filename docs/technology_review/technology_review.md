@@ -178,7 +178,7 @@ Neural networks can capture more complex interactions between features, but for 
 
 ## 4.3 Final Choice
 
-In the simple demo, we were able to do the same tasks with ~70 lines of code with Streamlit, but needed ~110 lines of code with plotly. Another factor we considered was users. As our primary users are non-technical stakeholders, we think it is important to have an intuitive and easy-to-use UI. Also we considered whether we can integrate easily with pretrained models. As every function we want to do already works with Streamlit, and due to our time limit (~ 1month), we chose to use Streamlit.
+In the simple demo, we were able to do the same tasks with 70 lines of code with Streamlit, but needed 110 lines of code with plotly. Another factor we considered was users. As our primary users are non-technical stakeholders, we think it is important to have an intuitive and easy-to-use UI. Also we considered whether we can integrate easily with pretrained models. As every function we want to do already works with Streamlit, and due to our time limit (1month), we chose to use Streamlit.
 
 ## 4.4 Drawbacks and Concerns
 

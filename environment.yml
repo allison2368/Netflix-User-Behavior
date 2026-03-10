@@ -1,0 +1,21 @@
+name: netflix-churn
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - conda-forge::numba          # required by shap
+  - pip
+  - pip:
+    - streamlit
+    - google-cloud-bigquery
+    - db-dtypes
+    - pandas
+    - numpy
+    - xgboost==1.7.6            # pinned — newer versions break SHAP
+    - scikit-learn
+    - imbalanced-learn
+    - shap
+    - matplotlib
+    - notebook                  # to run the .ipynb
+    - ipywidgets                # for notebook widgets

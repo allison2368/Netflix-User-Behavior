@@ -3,6 +3,7 @@ Data loading and visualization functions for Netflix Data Dashboard (Use Case 3)
 This module handles BigQuery data retrieval and Matplotlib/Seaborn plotting.
 """
 import os
+import pandas as pd
 import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -59,6 +60,7 @@ def plot_null_search(df):
         data=df, x="churn_label", y="avg_search_failure_rate", palette="magma", ax=ax
     )
     ax.set_title("Search Fatigue: Average Failure Rate per User (%)", fontsize=14)
+    ax.set_xlabel("User Group", fontsize=12)
     ax.set_ylabel("Avg. Failed Searches / Total Searches (%)")
 
     # Add data labels on top of bars
@@ -136,7 +138,7 @@ def load_tenure_analysis():
     """Groups churn rates by user tenure in months."""
     client = bigquery.Client(project=PROJECT_ID)
 
-    # SQL: Convert tenure_days into Months (30-day buckets)
+    # Convert tenure_days into Months (30-day buckets)
     sql = """
     WITH user_tenure AS (
         SELECT 
@@ -217,7 +219,8 @@ def plot_pm_report(df):
 
     ax.set_title("Which Genre Disappoints Users the Most? (Bounce Rate)", fontsize=15)
     ax.set_xlabel("Bounce Rate (Watched < 5 mins)")
-
+    ax.set_ylabel("Genre")
+    
     # Add vertical line for overall average bounce rate
     ax.axvline(
         df["bounce_rate"].mean(), color="red", linestyle="--", label="Overall Avg"
@@ -226,6 +229,44 @@ def plot_pm_report(df):
 
     return fig
 
+def plot_feature_importance_from_csv():
+    """
+    Plots feature importance using the pre-saved CSV file.
+    """
+    name_mapping = {
+            "watch_decline_ratio": "Watch Time Decline Rate",
+            "avg_search_failure_rate": "Search Failure Rate",
+            "tenure_days": "Subscription Tenure",
+            "avg_watch_duration": "Avg. Viewing Time",
+            "clicked_total": "Total Content Clicks",
+            "results_returned": "Search Results Volume",
+            "genre_diversity_score": "Genre Variety Index",
+            "failed_searches": "Failed Search Count",
+            "monthly_spend" : "Monthly Subscription Plan Amount",
+            "avg_search_time" : "Average Search Time",
+            # "watch_last_30d" : ""
+            # "engagement_ratio_7v30" : ""
+            
+        }
+    df_importance = pd.read_csv("./model_outputs/feature_importance.csv")
+    
+    # Change variables more friendly format
+    df_importance["feature"] = df_importance["feature"].replace(name_mapping)
+
+    # Sort by importance
+    df_importance = df_importance.sort_values(by="importance", ascending=False).head(10)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(data=df_importance, x="importance", y="feature", palette="viridis", ax=ax)
+    
+    ax.set_title("Top 10 Drivers of User Churn", fontsize=15)
+    ax.set_xlabel("Importance Score")
+    ax.set_ylabel("Features")
+    
+    # Show the importance numerically
+    for i, v in enumerate(df_importance["importance"]):
+        ax.text(v, i, f" {v:.3f}", va='center', fontweight='bold')
+    return fig
 
 def get_summary_metrics():
     """

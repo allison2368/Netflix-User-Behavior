@@ -15,6 +15,15 @@ def run_usecase_3():
     if "detail_view" not in st.session_state:
         st.session_state.detail_view = "Main"
 
+    # Show Feature Importance from churn model first
+    if st.session_state.detail_view == "Main":
+        st.subheader("🤖 AI Model Insight: What drives Churn?")
+     
+        fig = uc3.plot_feature_importance_from_csv() 
+        st.pyplot(fig)
+    
+        st.divider()
+
     # Fetch real data for the buttons
     with st.spinner("Fetching latest metrics..."):
         churn_val, bounce_val, search_val = uc3.get_summary_metrics()
@@ -51,7 +60,7 @@ def run_usecase_3():
             st.rerun()
 
     elif st.session_state.detail_view == "Bounce":
-        st.subheader("🎯 Deep-Dive: Genre-specific Bounce Rate")
+        st.subheader("🎯 Genre-specific Bounce Rate")
         df_bounce = uc3.load_final_pm_report()
         st.pyplot(uc3.plot_pm_report(df_bounce))
         if st.button("Back to Overview"):

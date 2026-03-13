@@ -14,10 +14,17 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
 
-      - name: Install Ruff
-        run: pip install ruff
+      - name: Install dependencies
+        run: pip install pylint
 
-      - name: Run Ruff
-        run: ruff check .
+      - name: Get changed Python files
+        id: changed_files
+        run: |
+          files=$(git diff --name-only origin/main...HEAD | grep '\.py$' || true)
+          echo "files=$files" >> $GITHUB_OUTPUT
+
+      - name: Run pylint
+        if: steps.changed_files.outputs.files != ''
+        run: pylint ${{ steps.changed_files.outputs.files }}

@@ -1,0 +1,19 @@
+name: netflix-env
+channels:
+  - defaults
+dependencies:
+  - pip=26.0.1
+  - python=3.14.2
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - xgboost 
+  - pip:            
+      - kagglehub==1.0.0
+      - streamlit
+      - plotly
+      - google-cloud-bigquery
+      - db-dtypes
+      - imbalanced-learn
+      - shap

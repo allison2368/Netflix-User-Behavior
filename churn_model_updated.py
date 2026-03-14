@@ -52,7 +52,17 @@ BUCKET_NAME = 'netflix-churn-models'
 # load data from BigQuery
 
 def load_data():
-    """Load data from BigQuery"""
+    """
+    Load data from BigQuery and return it as a cleaned pandas DataFrame.
+
+    This function executes a predefined SQL query against the configured
+    BigQuery project, retrieves the results as a pandas DataFrame, and
+    replaces any missing values with zeros.
+
+    Returns:
+        pandas.DataFrame: The query results from BigQuery with missing
+        values filled with 0.
+    """
     client = bigquery.Client(project=PROJECT_ID)
     job = client.query(SQL_QUERY)
     df = job.result().to_dataframe()
@@ -63,7 +73,26 @@ def load_data():
 # customer segmentation using K-Means
 
 def create_segments(df):
-    """Create customer segments using K-Means clustering"""
+    """
+    Generate customer segments using K-Means clustering.
+
+    This function scales selected behavioral features and applies
+    K-Means clustering to group users into segments. The resulting
+    cluster labels are added to the dataset.
+    Args:
+        df (pandas.DataFrame): Input DataFrame containing the user
+            features specified in `RFE_COLUMNS`.
+
+    Returns:
+        tuple:
+            pandas.DataFrame (df): DataFrame with an added `segment`
+            column representing the assigned cluster for each user.
+            sklearn.preprocessing.StandardScaler (scaler_rfe): Fitted scaler used
+            to normalize the segmentation features.
+            sklearn.cluster.KMeans (kmeans): Trained K-Means clustering model.
+            pandas.DataFrame (segment_profile): Segment profile table showing the mean
+            feature values for each cluster.
+    """
     df = df.copy()
 
     x_rfe = df[RFE_COLUMNS].copy()
@@ -81,7 +110,22 @@ def create_segments(df):
 # feature engineering and target creation
 
 def prepare_features(df):
-    """Prepare features and target"""
+    """
+    Create the churn target and clean feature matrix for modeling.
+
+    Generates a binary `churn_risk` label based on `watch_decline_ratio`,
+    removes non-feature columns, converts all remaining features to numeric,
+    and handles NaN or infinite values.
+
+    Args:
+        df (pandas.DataFrame): Input dataset containing user behavior features.
+
+    Returns:
+        tuple:
+            pandas.DataFrame (x): Clean feature matrix `X`.
+            pandas.Series (y): Target variable `y` representing churn risk.
+            list[str] (feature_names): Names of the feature columns used in the model.
+    """
     df = df.copy()
 
     # Create target
@@ -106,7 +150,17 @@ def prepare_features(df):
 # model training and evaluation
 # pylint: disable=too-many-locals
 def train_model(df):
-    """Train Random Forest model"""
+    """
+    Train a Random Forest churn model and return predictions,
+    evaluation metrics, and model artifacts.
+
+    Args:
+        df (pandas.DataFrame): Input dataset containing user features.
+
+    Returns:
+        dict: Trained model, scaler, test data, predictions, probabilities,
+        feature importance, and evaluation metrics.
+    """
     # Prepare features
     x, y, feature_names = prepare_features(df)
 
@@ -167,7 +221,17 @@ def train_model(df):
 # save model artifacts
 
 def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
-    """Save all model artifacts"""
+    """
+    Save trained model artifacts, clustering objects, metrics, and segment profiles
+    either to Google Cloud Storage or a local directory.
+
+    Args:
+        result (dict): Output dictionary from `train_model` containing the model,
+            scaler, feature names, metrics, and predictions.
+        scaler_rfe (StandardScaler): Fitted scaler used for RFE clustering features.
+        kmeans (KMeans): Trained K-Means segmentation model.
+        segment_profile (pandas.DataFrame): Aggregated feature summary for each segment.
+    """
 
     if USE_GCS:
         client = storage.Client(project=PROJECT_ID)

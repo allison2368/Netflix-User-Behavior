@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.12
+  - python=3.14
   - pip
   - python-dotenv
   - ipykernel
@@ -17,7 +17,7 @@ dependencies:
     - pandas
     - numpy
     - scikit-learn
-    - xgboost==1.7.6            # for shap
+    - xgboost          # for shap
     - imbalanced-learn
     - shap
     - matplotlib

@@ -3,25 +3,27 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.14
-  - pip
+  - python=3.14.2
+  - pip=26.0.1
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - xgboost
   - python-dotenv
   - ipykernel
   - notebook
   - ipywidgets
+  - seaborn
+  - pylint
+  - black
   - pip:
-    - streamlit
-    - google-cloud-bigquery
-    - pandas-gbq
-    - db-dtypes
-    - pandas
-    - numpy
-    - scikit-learn
-    - xgboost          # for shap
-    - imbalanced-learn
-    - shap
-    - matplotlib
-    - seaborn
-    - pylint
-    - black
-    - kagglehub==1.0.0
+      - kagglehub==1.0.0
+      - streamlit
+      - plotly
+      - google-cloud-bigquery
+      - pandas-gbq
+      - db-dtypes
+      - imbalanced-learn
+      - shap
+      - pytest

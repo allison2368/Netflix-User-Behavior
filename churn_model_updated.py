@@ -45,7 +45,7 @@ RF_CLASS_WEIGHT = 'balanced'
 
 # Storage
 MODEL_SAVE_DIR = './model_outputs'
-USE_GCS = False  # Set to True to save to Google Cloud Storage
+USE_GCS = True  # Set to True to save to Google Cloud Storage
 BUCKET_NAME = 'netflix-churn-models'
 
 

@@ -8,45 +8,117 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from churn_model import (
-    load_data, engineer_features, train_model,
-    score_users, get_shap_values, get_shap_for_user
-)
+from google.cloud import storage
+import pickle
+import shap
+
+PROJECT_ID = "netflix-user-behavior"
+bucket_name = "netflix-churn-models"
+artifact_prefix = "model_outputs/"
+RFE_COLUMNS = [
+    "days_since_last_watch",
+    "total_sessions",
+    "avg_completion_rate"
+]
 
 st.set_page_config(page_title="Churn Risk Dashboard", page_icon="📉", layout="wide")
 
+@st.cache_resource(show_spinner="Loading model artifacts from GCS...")
+def load_artifacts():
+    client = storage.Client(project=PROJECT_ID)
+    bucket = client.bucket("netflix-churn-models")
 
-# Pipeline (all cached — only runs once per session) 
-@st.cache_data(show_spinner="Loading data from BigQuery...")
-def get_data():
-    return load_data()
+    def load_pickle(file_name):
+        blob = bucket.blob(f"model_outputs/{file_name}")
+        return pickle.loads(blob.download_as_bytes())
 
-@st.cache_data(show_spinner="Engineering features...")
-def get_features(_pdf, _user):
-    return engineer_features(_pdf, _user)
+    rf_model = load_pickle("rf_model.pkl")
+    scaler = load_pickle("scaler.pkl")
+    rfe_scaler = load_pickle("rfe_scaler.pkl")
+    kmeans_model = load_pickle("kmeans.pkl")
+    feature_names = load_pickle("feature_names.pkl")
+    metrics = load_pickle("metrics.pkl")
 
-@st.cache_data(show_spinner="Training churn model...")
-def get_model(_df):
-    return train_model(_df)
+    segment_profile = pd.read_csv(
+        "gs://netflix-churn-models/model_outputs/segment_profile.csv"
+    )
 
-@st.cache_data(show_spinner="Scoring users...")
-def get_scores(_df, _result):
-    return score_users(_df, _result)
+    feature_importance = pd.read_csv(
+        "gs://netflix-churn-models/model_outputs/feature_importance.csv"
+    )
 
-@st.cache_data(show_spinner="Computing SHAP values...")
-def get_shap(_result):
-    return get_shap_values(_result)
+    return (
+        rf_model,
+        scaler,
+        rfe_scaler,
+        kmeans_model,
+        feature_names,
+        metrics,
+        segment_profile,
+        feature_importance
+    )
+# @st.cache_data(show_spinner="Training churn model...")
+# def get_model(_df):
+    #return train_model(_df)
+
+#@st.cache_data(show_spinner="Scoring users...")
+#def get_scores(_df, _result):
+ #   return score_users(_df, _result)
+
+#@st.cache_data(show_spinner="Computing SHAP values...")
+#def get_shap(_result):
+ #   return get_shap_values(_result)
+ 
 
 
-pdf, user = get_data()
-df        = get_features(pdf, user)
-result    = get_model(df)
-df["churn_probability"]  = get_scores(df, result)
-shap_vals, feature_names = get_shap(result)
+rf_model, scaler, rfe_scaler, kmeans_model, feature_names, metrics, segment_profile, feature_importance = load_artifacts()
+from google.cloud import bigquery
+
+@st.cache_data(show_spinner="Loading feature table...")
+def load_features():
+    client = bigquery.Client(project=PROJECT_ID)
+
+    query = """
+    SELECT *
+    FROM `netflix-user-behavior.kaggle_cleaned.churn_features`
+    """
+
+    df = client.query(query).to_dataframe()
+    df.fillna(0, inplace=True)
+
+    return df
+
+df = load_features()
+# recreate segmentation features
+x_rfe = df[RFE_COLUMNS]
+
+# scale with saved scaler
+x_scaled = rfe_scaler.transform(x_rfe)
+
+# predict segment using saved kmeans model
+df["segment"] = kmeans_model.predict(x_scaled)
+X = df[feature_names]
+
+missing = set(feature_names) - set(df.columns)
+
+for col in missing:
+    df[col] = 0
+
+X = df[feature_names]
+X_scaled = scaler.transform(X)
+df["churn_probability"] = rf_model.predict_proba(X_scaled)[:, 1]
+
+
+
+explainer = shap.TreeExplainer(rf_model)
+
+shap_values = explainer.shap_values(X_scaled)[1]
+
+feature_names = X.columns
 
 
 # Header
-st.title("📉 Churn Risk Dashboard")
+st.title("Churn Risk Dashboard")
 st.caption(f" {len(df):,} users loaded from BigQuery")
 st.divider()
 
@@ -84,12 +156,12 @@ st.divider()
 
 
 #  Feature Importance + Risk Distribution 
-st.subheader("🔍 Model Explainability")
+st.subheader("Model Explainability")
 fi_col, dist_col = st.columns(2)
 
 with fi_col:
     st.markdown("**Feature Importance (mean |SHAP|)**")
-    mean_shap = np.abs(shap_vals).mean(axis=0)
+    mean_shap = np.abs(shap_values).mean(axis=0)
     importance_df = (
         pd.DataFrame({"feature": feature_names, "importance": mean_shap})
         .sort_values("importance", ascending=True)
@@ -145,8 +217,12 @@ if user_ids:
     user_row    = df[df["user_id"] == selected_id]
 
     if not user_row.empty:
-        shap_user, base_val, feat_names, feat_vals = get_shap_for_user(user_row, result)
-
+        user_features = user_row[feature_names]
+        user_scaled = scaler.transform(user_features)
+        shap_user = explainer.shap_values(user_scaled)[1][0]
+        base_val = explainer.expected_value[1]
+        feat_names = feature_names
+        feat_vals = user_features.iloc[0].values
         row = user_row.iloc[0]
         m1, m2, m3, m4 = st.columns(4)
         with m1:

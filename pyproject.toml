@@ -5,3 +5,7 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I"]  # errors, formatting, import sorting
 
+[tool.pylint.MASTER]
+# Add project root to path so "churn_model" imports resolve when running pylint from repo root
+init-hook = "import sys, os; sys.path.insert(0, os.getcwd())"
+

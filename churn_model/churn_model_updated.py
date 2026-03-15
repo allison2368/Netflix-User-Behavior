@@ -164,10 +164,16 @@ def train_model(df):
     # Prepare features
     x, y, feature_names = prepare_features(df)
 
-    # Split data
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
-    )
+    
+    # Only stratify if both classes have enough samples
+    if y.nunique() > 1 and min(y.value_counts()) > 1:
+        stratify = y
+    else:
+         stratify = None 
+    x_train, x_test, y_train, y_test = train_test_split(x,y,
+        test_size=TEST_SIZE,
+        random_state=RANDOM_STATE,
+        stratify=stratify)
 
     # Scale
     scaler = StandardScaler()
@@ -175,9 +181,25 @@ def train_model(df):
     x_test_scaled = scaler.transform(x_test)
 
     # SMOTE
-    smote = SMOTE(sampling_strategy=SMOTE_RATIO, random_state=RANDOM_STATE)
-    x_train_resampled, y_train_resampled = smote.fit_resample(x_train_scaled, y_train)
+    # SMOTE only if enough minority samples exist
+    # (safe fallback if dataset too small)
+    class_counts = y_train.value_counts()
 
+    if len(class_counts) > 1 and class_counts.min() > 1:
+        try:
+            smote = SMOTE(
+                sampling_strategy=SMOTE_RATIO,
+                random_state=RANDOM_STATE
+            )
+            x_train_resampled, y_train_resampled = smote.fit_resample(
+                x_train_scaled,
+                y_train
+            )
+        except ValueError:
+            # fallback if SMOTE fails
+            x_train_resampled, y_train_resampled = x_train_scaled, y_train
+    else:
+        x_train_resampled, y_train_resampled = x_train_scaled, y_train
     # Train Random Forest
     rf_model = RandomForestClassifier(
         n_estimators=RF_N_ESTIMATORS,
@@ -187,35 +209,47 @@ def train_model(df):
         n_jobs=-1
     )
     rf_model.fit(x_train_resampled, y_train_resampled)
-
     # Predictions
     y_probs = rf_model.predict_proba(x_test_scaled)[:, 0]
     y_pred = [0 if p > PREDICTION_THRESHOLD else 1 for p in y_probs]
 
     # Metrics
     feature_importance = pd.DataFrame({
-        'feature': feature_names,
-        'importance': rf_model.feature_importances_
-    }).sort_values('importance', ascending=False)
+    "feature": feature_names,
+    "importance": rf_model.feature_importances_
+}).sort_values("importance", ascending=False)
+
+    # compute accuracy always
+    accuracy = accuracy_score(y_test, y_pred)
+
+# only compute recall / f1 if more than one class exists
+    if y_test.nunique() > 1:
+        recall = recall_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, output_dict=True)
+    else:
+        recall = 0.0
+        f1 = 0.0
+        report = {}
 
     return {
-        'model': rf_model,
-        'scaler': scaler,
-        'feature_cols': feature_names,
-        'X_test_scaled': x_test_scaled,
-        'X_test': x_test,
-        'y_test': y_test,
-        'predictions': y_pred,
-        'probabilities': y_probs,
-        'metrics': {
-            'accuracy': accuracy_score(y_test, y_pred),
-            'recall': recall_score(y_test, y_pred),
-            'f1_score': f1_score(y_test, y_pred),
-            'classification_report': classification_report(y_test, y_pred, output_dict=True),
-            'feature_importance': feature_importance,
-            'threshold': PREDICTION_THRESHOLD
-        }
+    "model": rf_model,
+    "scaler": scaler,
+    "feature_cols": feature_names,
+    "X_test_scaled": x_test_scaled,
+    "X_test": x_test,
+    "y_test": y_test,
+    "predictions": y_pred,
+    "probabilities": y_probs,
+    "metrics": {
+        "accuracy": accuracy,
+        "recall": recall,
+        "f1_score": f1,
+        "classification_report": report,
+        "feature_importance": feature_importance,
+        "threshold": PREDICTION_THRESHOLD
     }
+}
 
 
 # save model artifacts
@@ -223,7 +257,7 @@ def train_model(df):
 def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
     """
     Save trained model artifacts, clustering objects, metrics, and segment profiles
-    either to Google Cloud Storage or a local directory.
+    to a local directory.
 
     Args:
         result (dict): Output dictionary from `train_model` containing the model,
@@ -232,86 +266,41 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
         kmeans (KMeans): Trained K-Means segmentation model.
         segment_profile (pandas.DataFrame): Aggregated feature summary for each segment.
     """
-
-    if USE_GCS:
-        client = storage.Client(project=PROJECT_ID)
-        bucket = client.bucket(BUCKET_NAME)
-
-        print(f"Saving to GCS: gs://{BUCKET_NAME}/model_outputs/")
-
-        # Save pickle files
-        for filename, obj in [
-            ('rf_model.pkl', result['model']),
-            ('scaler.pkl', result['scaler']),
-            ('rfe_scaler.pkl', scaler_rfe),
-            ('kmeans.pkl', kmeans),
-            ('feature_names.pkl', result['feature_cols']),
-            ('metrics.pkl', result['metrics'])
-        ]:
-            blob = bucket.blob(f'model_outputs/{filename}')
-            blob.upload_from_string(pickle.dumps(obj))
-            print(f"  ✓ {filename}")
-
-        # Save CSVs
-        for filename, data in [
-            ('segment_profile.csv', segment_profile),
-            ('feature_importance.csv', result['metrics']['feature_importance'])
-        ]:
-            csv_buffer = io.StringIO()
-            data.to_csv(csv_buffer, index=filename == 'segment_profile.csv')
-            blob = bucket.blob(f'model_outputs/{filename}')
-            blob.upload_from_string(csv_buffer.getvalue())
-            print(f"  ✓ {filename}")
-
-        # Save config
-        config = {
-            'PROJECT_ID': PROJECT_ID,
-            'N_CLUSTERS': N_CLUSTERS,
-            'CHURN_THRESHOLD': CHURN_THRESHOLD,
-            'PREDICTION_THRESHOLD': PREDICTION_THRESHOLD
-        }
-        blob = bucket.blob('model_outputs/config.pkl')
-        blob.upload_from_string(pickle.dumps(config))
-        print("  ✓ config.pkl")
-
-        print(f"\n✓ Saved to: gs://{BUCKET_NAME}/model_outputs/")
-
-    else:
         # Save locally
-        os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+    os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
 
-        # Save pickle files
-        with open(os.path.join(MODEL_SAVE_DIR, 'rf_model.pkl'), 'wb') as f:
-            pickle.dump(result['model'], f)
-        with open(os.path.join(MODEL_SAVE_DIR, 'scaler.pkl'), 'wb') as f:
-            pickle.dump(result['scaler'], f)
-        with open(os.path.join(MODEL_SAVE_DIR, 'rfe_scaler.pkl'), 'wb') as f:
-            pickle.dump(scaler_rfe, f)
-        with open(os.path.join(MODEL_SAVE_DIR, 'kmeans.pkl'), 'wb') as f:
-            pickle.dump(kmeans, f)
-        with open(os.path.join(MODEL_SAVE_DIR, 'feature_names.pkl'), 'wb') as f:
-            pickle.dump(result['feature_cols'], f)
-        with open(os.path.join(MODEL_SAVE_DIR, 'metrics.pkl'), 'wb') as f:
-            pickle.dump(result['metrics'], f)
+    # Save pickle files
+    with open(os.path.join(MODEL_SAVE_DIR, 'rf_model.pkl'), 'wb') as f:
+        pickle.dump(result['model'], f)
+    with open(os.path.join(MODEL_SAVE_DIR, 'scaler.pkl'), 'wb') as f:
+        pickle.dump(result['scaler'], f)
+    with open(os.path.join(MODEL_SAVE_DIR, 'rfe_scaler.pkl'), 'wb') as f:
+        pickle.dump(scaler_rfe, f)
+    with open(os.path.join(MODEL_SAVE_DIR, 'kmeans.pkl'), 'wb') as f:
+        pickle.dump(kmeans, f)
+    with open(os.path.join(MODEL_SAVE_DIR, 'feature_names.pkl'), 'wb') as f:
+        pickle.dump(result['feature_cols'], f)
+    with open(os.path.join(MODEL_SAVE_DIR, 'metrics.pkl'), 'wb') as f:
+        pickle.dump(result['metrics'], f)
 
-        # Save CSVs
-        segment_profile.to_csv(os.path.join(MODEL_SAVE_DIR, 'segment_profile.csv'))
-        result['metrics']['feature_importance'].to_csv(
-            os.path.join(MODEL_SAVE_DIR, 'feature_importance.csv'),
-            index=False
-        )
+    # Save CSVs
+    segment_profile.to_csv(os.path.join(MODEL_SAVE_DIR, 'segment_profile.csv'))
+    result['metrics']['feature_importance'].to_csv(
+        os.path.join(MODEL_SAVE_DIR, 'feature_importance.csv'),
+        index=False
+    )
 
-        # Save config
-        config = {
-            'PROJECT_ID': PROJECT_ID,
-            'N_CLUSTERS': N_CLUSTERS,
-            'CHURN_THRESHOLD': CHURN_THRESHOLD,
-            'PREDICTION_THRESHOLD': PREDICTION_THRESHOLD
-        }
-        with open(os.path.join(MODEL_SAVE_DIR, 'config.pkl'), 'wb') as f:
-            pickle.dump(config, f)
+    # Save config
+    config = {
+        'PROJECT_ID': PROJECT_ID,
+        'N_CLUSTERS': N_CLUSTERS,
+        'CHURN_THRESHOLD': CHURN_THRESHOLD,
+        'PREDICTION_THRESHOLD': PREDICTION_THRESHOLD
+    }
+    with open(os.path.join(MODEL_SAVE_DIR, 'config.pkl'), 'wb') as f:
+        pickle.dump(config, f)
 
-        print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
+    print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
 
 
 # main function to run everything
@@ -357,10 +346,7 @@ def main():
 
     # Step 5: Save everything
     print("\n[5/5] Saving model artifacts...")
-    if USE_GCS:
-        print(f"  Storage: Google Cloud Storage (gs://{BUCKET_NAME})")
-    else:
-        print(f"  Storage: Local ({MODEL_SAVE_DIR})")
+    print(f"  Storage: Local ({MODEL_SAVE_DIR})")
 
     save_artifacts(result, scaler_rfe, kmeans, segment_profile)
 

@@ -6,16 +6,21 @@ Just run: python churn_model.py
 
 import os
 import pickle
-import pandas as pd
-import numpy as np
-from google.cloud import bigquery
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, recall_score, f1_score
+import numpy as np
+import pandas as pd
+from google.cloud import bigquery
 from imblearn.over_sampling import SMOTE
+from sklearn.cluster import KMeans
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    recall_score,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 # config
 
@@ -171,8 +176,9 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
     
     if USE_GCS:
         # Save to Google Cloud Storage
-        from google.cloud import storage
         import io
+
+        from google.cloud import storage
         
         client = storage.Client(project=PROJECT_ID)
         bucket = client.bucket(BUCKET_NAME)
@@ -212,7 +218,7 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
         }
         blob = bucket.blob('model_outputs/config.pkl')
         blob.upload_from_string(pickle.dumps(config))
-        print(f"  ✓ config.pkl")
+        print("  ✓ config.pkl")
         
         print(f"\n✓ Saved to: gs://{BUCKET_NAME}/model_outputs/")
         
@@ -287,7 +293,7 @@ def main():
     print(f"  F1 Score: {result['metrics']['f1_score']:.3f}")
     
     test_churn_counts = pd.Series(result['y_test']).value_counts()
-    print(f"\n  Test Set Distribution:")
+    print("\n  Test Set Distribution:")
     print(f"    No Churn (0): {test_churn_counts.get(0, 0):,}")
     print(f"    Churn Risk (1): {test_churn_counts.get(1, 0):,}")
     

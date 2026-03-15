@@ -1,7 +1,7 @@
 import dash
-from dash import dash_table, dcc, html, Input, Output, State
-from dash.dependencies import Input, Output, State, MATCH, ALL
 import pandas as pd
+from dash import Input, Output, State, dash_table, dcc, html
+from dash.dependencies import ALL, Input, Output, State
 from sklearn.linear_model import LogisticRegression
 
 # -----------------------

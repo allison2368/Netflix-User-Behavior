@@ -1,8 +1,14 @@
-import pandas as pd
-import numpy as np
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from churn_model_updated import prepare_features, create_segments, train_model, load_data
+import numpy as np
+import pandas as pd
+
+from churn_model_updated import (
+    create_segments,
+    load_data,
+    prepare_features,
+    train_model,
+)
 
 
 def test_prepare_features_creates_target():

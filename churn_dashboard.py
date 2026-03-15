@@ -4,13 +4,18 @@ Run:  python -m streamlit run churn_dashboard.py
 Auth: gcloud auth application-default login
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import streamlit as st
+
 from churn_model import (
-    load_data, engineer_features, train_model,
-    score_users, get_shap_values, get_shap_for_user
+    engineer_features,
+    get_shap_for_user,
+    get_shap_values,
+    load_data,
+    score_users,
+    train_model,
 )
 
 st.set_page_config(page_title="Churn Risk Dashboard", page_icon="📉", layout="wide")

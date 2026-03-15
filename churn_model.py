@@ -9,8 +9,8 @@ Contains:
   - score_users()       : scores all users using a trained model
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from google.cloud import bigquery
 
 # Big Query config
@@ -169,10 +169,10 @@ def train_model(df):
       X_test             — unscaled test features (used by SHAP summary plot)
       y_test             — test labels
     """
-    from xgboost import XGBClassifier
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.model_selection import train_test_split
     from imblearn.over_sampling import SMOTE
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    from xgboost import XGBClassifier
 
     X = _prepare_X(df)
     y = df["churn_risk"]

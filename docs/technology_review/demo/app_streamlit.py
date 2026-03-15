@@ -1,5 +1,5 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 from sklearn.linear_model import LogisticRegression
 
 st.title("Customer & Content Analytics Dashboard")

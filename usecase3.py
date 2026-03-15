@@ -3,10 +3,13 @@ Data loading and visualization functions for Netflix Data Dashboard (Use Case 3)
 This module handles BigQuery data retrieval and Matplotlib/Seaborn plotting.
 """
 import os
+import matplotlib
+matplotlib.use("Agg")  # pylint: disable=wrong-import-position
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import seaborn as sns
 import streamlit as st
-import matplotlib.pyplot as plt
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
@@ -53,29 +56,6 @@ def load_null_search_analysis():
     return client.query(sql).to_dataframe()
 
 
-def plot_null_search(df):
-    """Generates a bar plot for search fatigue analysis."""
-    fig, ax = plt.subplots(figsize=(8, 6))
-    sns.barplot(
-        data=df, x="churn_label", y="avg_search_failure_rate", palette="magma", ax=ax
-    )
-    ax.set_title("Search Fatigue: Average Failure Rate per User (%)", fontsize=14)
-    ax.set_xlabel("User Group", fontsize=12)
-    ax.set_ylabel("Avg. Failed Searches / Total Searches (%)")
-
-    # Add data labels on top of bars
-    for i in range(len(df)):
-        ax.text(
-            i,
-            df.avg_search_failure_rate[i] + 0.5,
-            f"{df.avg_search_failure_rate[i]:.2f}%",
-            ha="center",
-            fontweight="bold",
-        )
-
-    return fig
-
-
 @st.cache_data
 def load_failed_queries():
     """Fetches the top 10 search queries that led to no clicks for the Churn group."""
@@ -102,37 +82,7 @@ def load_failed_queries():
     return client.query(sql).to_dataframe()
 
 
-def check_specific_query_churn():
-    """Calculates the churn rate for users who searched for specific high-failure terms."""
-    client = bigquery.Client(project=PROJECT_ID)
-
-    sql = """
-    WITH target_queries AS (
-        SELECT ['christmas movies', 'animated shows', 'classic movies', 'sci-fi', 
-                'netflix originals', 'true crime', 'war movies', 'comedy shows', 
-                'new releases', 'action movies'] as queries
-    ),
-    users_who_searched AS (
-        SELECT DISTINCT s.user_id
-        FROM `netflix-user-behavior.kaggle_cleaned.search_logs_cleaned` s, target_queries
-        WHERE s.search_query IN UNNEST(target_queries.queries)
-    ),
-    user_labels AS (
-        SELECT User_id,
-               CASE WHEN watch_decline_ratio < 0.2 THEN 1 ELSE 0 END as is_churn
-        FROM `netflix-user-behavior.kaggle_cleaned.churn_features`
-    )
-    SELECT 
-        COUNT(u.user_id) as total_targeted_users,
-        SUM(l.is_churn) as churn_count,
-        AVG(l.is_churn) * 100 as targeted_churn_rate
-    FROM users_who_searched u
-    JOIN user_labels l ON u.user_id = l.User_id
-    """
-    return client.query(sql).to_dataframe()
-
-
-# Churn group is Newbies or long term subscribers?
+# Churn group is newbies or long term subscribers?
 @st.cache_data
 def load_tenure_analysis():
     """Groups churn rates by user tenure in months."""
@@ -162,6 +112,11 @@ def load_tenure_analysis():
 def plot_tenure(df):
     """Generates a line plot showing churn rate trends by subscription tenure."""
     fig, ax = plt.subplots(figsize=(12, 6))
+
+    if df is None or df.empty or "tenure_months" not in df.columns:
+        ax.text(0.5, 0.5, "No Data Available", ha="center")
+        return fig
+
     sns.lineplot(
         data=df,
         x="tenure_months",
@@ -178,7 +133,11 @@ def plot_tenure(df):
     ax.set_title("Is Churn higher for Newbies or Veterans?", fontsize=15, pad=20)
     ax.set_xlabel("Tenure (Months)", fontsize=12)
     ax.set_ylabel("Churn Rate (%)", fontsize=12)
-    ax.set_ylim(0, max(df["churn_rate"]) + 5)
+
+    # Make sure not accessing empty data
+    if not df.empty:
+        ax.set_ylim(0, max(df["churn_rate"]) + 5)
+
     ax.grid(True, alpha=0.3)
     ax.legend()
 
@@ -206,7 +165,8 @@ def load_final_pm_report():
 
 def plot_pm_report(df):
     """Generates a bar plot comparing bounce rates by genre across groups."""
-    fig, ax = plt.subplots(figsize=(12, 8))
+    plt.style.use("dark_background")  # dark theme
+    fig, ax = plt.subplots(figsize=(8, 5))
 
     sns.barplot(
         data=df,
@@ -220,7 +180,7 @@ def plot_pm_report(df):
     ax.set_title("Which Genre Disappoints Users the Most? (Bounce Rate)", fontsize=15)
     ax.set_xlabel("Bounce Rate (Watched < 5 mins)")
     ax.set_ylabel("Genre")
-    
+
     # Add vertical line for overall average bounce rate
     ax.axvline(
         df["bounce_rate"].mean(), color="red", linestyle="--", label="Overall Avg"
@@ -229,27 +189,25 @@ def plot_pm_report(df):
 
     return fig
 
+
 def plot_feature_importance_from_csv():
     """
     Plots feature importance using the pre-saved CSV file.
     """
     name_mapping = {
-            "watch_decline_ratio": "Watch Time Decline Rate",
-            "avg_search_failure_rate": "Search Failure Rate",
-            "tenure_days": "Subscription Tenure",
-            "avg_watch_duration": "Avg. Viewing Time",
-            "clicked_total": "Total Content Clicks",
-            "results_returned": "Search Results Volume",
-            "genre_diversity_score": "Genre Variety Index",
-            "failed_searches": "Failed Search Count",
-            "monthly_spend" : "Monthly Subscription Plan Amount",
-            "avg_search_time" : "Average Search Time",
-            # "watch_last_30d" : ""
-            # "engagement_ratio_7v30" : ""
-            
-        }
+        "engagement_ratio_7v30": "Engagement Drop (Last 7d vs 30d)",
+        "days_since_last_watch": "Days Since Last View",
+        "watch_last_30d": "Viewing Time (Last 30 Days)",
+        "total_sessions": "Total App Sessions",
+        "avg_completion_rate": "Content Completion Rate (%)",
+        "segment": "User Segment Group",
+        "Monthly Subscription Plan Amount": "Monthly Bill Amount",
+        "avg_rec_score_seen": "Recommendation Relevance Score",
+        "Subscription Tenure": "Total Membership Days",
+        "Average Search Time": "Time Spent Searching",
+    }
     df_importance = pd.read_csv("./model_outputs/feature_importance.csv")
-    
+
     # Change variables more friendly format
     df_importance["feature"] = df_importance["feature"].replace(name_mapping)
 
@@ -257,16 +215,25 @@ def plot_feature_importance_from_csv():
     df_importance = df_importance.sort_values(by="importance", ascending=False).head(10)
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(data=df_importance, x="importance", y="feature", palette="viridis", ax=ax)
-    
+    sns.barplot(
+        data=df_importance,
+        x="importance",
+        y="feature",
+        hue="feature",
+        palette="viridis",
+        legend=False,
+        ax=ax,
+    )
+
     ax.set_title("Top 10 Drivers of User Churn", fontsize=15)
     ax.set_xlabel("Importance Score")
     ax.set_ylabel("Features")
-    
+
     # Show the importance numerically
     for i, v in enumerate(df_importance["importance"]):
-        ax.text(v, i, f" {v:.3f}", va='center', fontweight='bold')
+        ax.text(v, i, f" {v:.3f}", va="center", fontweight="bold")
     return fig
+
 
 def get_summary_metrics():
     """

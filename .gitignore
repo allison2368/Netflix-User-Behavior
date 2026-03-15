@@ -1,3 +1,6 @@
 # Use Case 3 - Not load big query json and .env
+__pycache__/
+*.py[cod]
+.coverage
 netflix-user-behavior-81e397601954.json
 .env

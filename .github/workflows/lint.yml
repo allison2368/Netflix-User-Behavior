@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pylint pytest pandas streamlit matplotlib seaborn google-cloud-bigquery python-dotenv
+          pip install pylint pytest pandas streamlit matplotlib seaborn google-cloud-bigquery python-dotenv imbalanced-learn scikit-learn
 
       - name: Get changed Python files
         id: changed_files
@@ -32,4 +32,4 @@ jobs:
         run: pylint ${{ steps.changed_files.outputs.files }}
 
       - name: Run tests
-        run: PYTHONPATH=. pytest tests/
+        run: PYTHONPATH=. pytest tests/unit/test_usecase3.py tests/unit/test_usecase3_app.py

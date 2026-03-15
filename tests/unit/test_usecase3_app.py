@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 
 @patch("usecase3_app.uc3.get_summary_metrics")
 @patch("usecase3_app.uc3.plot_feature_importance_from_csv")
-def test_app_initial_load(mock_metrics):
+def test_app_initial_load(_mock_plot, mock_metrics):
     """Test if the app initializes correctly with the 'Main' view."""
     # Mocking return values to avoid BigQuery connection
     mock_metrics.return_value = (8.0, 15.0, 15.0)

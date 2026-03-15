@@ -32,4 +32,4 @@ jobs:
         run: pylint ${{ steps.changed_files.outputs.files }}
 
       - name: Run tests
-        run: pytest tests/
+        run: PYTHONPATH=. pytest tests/

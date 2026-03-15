@@ -17,7 +17,9 @@ jobs:
           python-version: "3.14"
 
       - name: Install dependencies
-        run: pip install pylint pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint pytest pandas streamlit matplotlib seaborn google-cloud-bigquery python-dotenv
 
       - name: Get changed Python files
         id: changed_files

@@ -2,8 +2,13 @@
 Use Case 1: High-Risk Churner Dashboard
 Run:  python -m streamlit run churn_dashboard.py
 Auth: gcloud auth application-default login
+
+Data source: GCS only. All artifacts and scored user data are loaded from
+  gs://netflix-churn-models/model_outputs/ (no local model_outputs directory).
+  Bucket layout matches what churn_model_updated.py uploads when USE_GCS=True.
 """
 
+import io
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,7 +19,7 @@ import shap
 
 PROJECT_ID = "netflix-user-behavior"
 bucket_name = "netflix-churn-models"
-artifact_prefix = "model_outputs/"
+GCS_ARTIFACT_PREFIX = "model_outputs/"
 RFE_COLUMNS = [
     "days_since_last_watch",
     "total_sessions",
@@ -26,10 +31,10 @@ st.set_page_config(page_title="Churn Risk Dashboard", page_icon="📉", layout="
 @st.cache_resource(show_spinner="Loading model artifacts from GCS...")
 def load_artifacts():
     client = storage.Client(project=PROJECT_ID)
-    bucket = client.bucket("netflix-churn-models")
+    bucket = client.bucket(bucket_name)
 
     def load_pickle(file_name):
-        blob = bucket.blob(f"model_outputs/{file_name}")
+        blob = bucket.blob(f"{GCS_ARTIFACT_PREFIX}{file_name}")
         return pickle.loads(blob.download_as_bytes())
 
     rf_model = load_pickle("rf_model.pkl")
@@ -40,11 +45,10 @@ def load_artifacts():
     metrics = load_pickle("metrics.pkl")
 
     segment_profile = pd.read_csv(
-        "gs://netflix-churn-models/model_outputs/segment_profile.csv"
+        io.StringIO(bucket.blob(f"{GCS_ARTIFACT_PREFIX}segment_profile.csv").download_as_text())
     )
-
     feature_importance = pd.read_csv(
-        "gs://netflix-churn-models/model_outputs/feature_importance.csv"
+        io.StringIO(bucket.blob(f"{GCS_ARTIFACT_PREFIX}feature_importance.csv").download_as_text())
     )
 
     return (
@@ -57,56 +61,27 @@ def load_artifacts():
         segment_profile,
         feature_importance
     )
-# @st.cache_data(show_spinner="Training churn model...")
-# def get_model(_df):
-    #return train_model(_df)
 
-#@st.cache_data(show_spinner="Scoring users...")
-#def get_scores(_df, _result):
- #   return score_users(_df, _result)
 
-#@st.cache_data(show_spinner="Computing SHAP values...")
-#def get_shap(_result):
- #   return get_shap_values(_result)
- 
+@st.cache_data(show_spinner="Loading scored user data from GCS...")
+def load_scored_users():
+    """Load pre-scored user dataframe from GCS (written by churn_model_updated.py when USE_GCS=True)."""
+    client = storage.Client(project=PROJECT_ID)
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(f"{GCS_ARTIFACT_PREFIX}scored_users.csv")
+    csv_text = blob.download_as_text()
+    df = pd.read_csv(io.StringIO(csv_text))
+    df.fillna(0, inplace=True)
+    return df
 
 
 rf_model, scaler, rfe_scaler, kmeans_model, feature_names, metrics, segment_profile, feature_importance = load_artifacts()
-from google.cloud import bigquery
+df = load_scored_users()
 
-@st.cache_data(show_spinner="Loading feature table...")
-def load_features():
-    client = bigquery.Client(project=PROJECT_ID)
-
-    query = """
-    SELECT *
-    FROM `netflix-user-behavior.kaggle_cleaned.churn_features`
-    """
-
-    df = client.query(query).to_dataframe()
-    df.fillna(0, inplace=True)
-
-    return df
-
-df = load_features()
-# recreate segmentation features
-x_rfe = df[RFE_COLUMNS]
-
-# scale with saved scaler
-x_scaled = rfe_scaler.transform(x_rfe)
-
-# predict segment using saved kmeans model
-df["segment"] = kmeans_model.predict(x_scaled)
-X = df[feature_names]
-
-missing = set(feature_names) - set(df.columns)
-
-for col in missing:
-    df[col] = 0
-
-X = df[feature_names]
+# Pre-computed segment and churn_probability come from GCS; build X for SHAP only
+X = df[feature_names].copy()
+X = X.apply(pd.to_numeric, errors="coerce").fillna(0).replace([np.inf, -np.inf], 0).astype(float)
 X_scaled = scaler.transform(X)
-df["churn_probability"] = rf_model.predict_proba(X_scaled)[:, 1]
 
 
 
@@ -119,7 +94,7 @@ feature_names = X.columns
 
 # Header
 st.title("Churn Risk Dashboard")
-st.caption(f" {len(df):,} users loaded from BigQuery")
+st.caption(f" {len(df):,} users loaded from GCS (pre-scored)")
 st.divider()
 
 
@@ -161,9 +136,11 @@ fi_col, dist_col = st.columns(2)
 
 with fi_col:
     st.markdown("**Feature Importance (mean |SHAP|)**")
-    mean_shap = np.abs(shap_values).mean(axis=0)
+    mean_shap = np.atleast_1d(np.abs(shap_values).mean(axis=0)).ravel()
+    names = list(X.columns)
+    n = min(len(names), len(mean_shap))
     importance_df = (
-        pd.DataFrame({"feature": feature_names, "importance": mean_shap})
+        pd.DataFrame({"feature": names[:n], "importance": mean_shap[:n]})
         .sort_values("importance", ascending=True)
         .tail(10)
     )
@@ -194,14 +171,22 @@ st.subheader(f"High-Risk Users ({len(filtered):,})")
 
 display_cols = ["user_id", "first_name", "last_name", "email",
                 "subscription_plan", "monthly_spend", "churn_probability",
-                "days_since_last_watch", "watch_mean", "completion_rate_mean"]
+                "days_since_last_watch", "watch_mean", "completion_rate_mean",
+                "watch_last_30d", "avg_completion_rate"]
 display_cols = [c for c in display_cols if c in filtered.columns]
 
 show_df = filtered[display_cols].copy()
-show_df["churn_probability"]    = (show_df["churn_probability"] * 100).round(1).astype(str) + "%"
-show_df["monthly_spend"]        = show_df["monthly_spend"].map("${:.2f}".format)
-show_df["watch_mean"]           = show_df["watch_mean"].round(1)
-show_df["completion_rate_mean"] = (show_df["completion_rate_mean"] * 100).round(1).astype(str) + "%"
+show_df["churn_probability"] = (show_df["churn_probability"] * 100).round(1).astype(str) + "%"
+if "monthly_spend" in show_df.columns:
+    show_df["monthly_spend"] = show_df["monthly_spend"].map("${:.2f}".format)
+if "watch_mean" in show_df.columns:
+    show_df["watch_mean"] = show_df["watch_mean"].round(1)
+if "completion_rate_mean" in show_df.columns:
+    show_df["completion_rate_mean"] = (show_df["completion_rate_mean"] * 100).round(1).astype(str) + "%"
+if "watch_last_30d" in show_df.columns:
+    show_df["watch_last_30d"] = show_df["watch_last_30d"].round(1)
+if "avg_completion_rate" in show_df.columns:
+    show_df["avg_completion_rate"] = (show_df["avg_completion_rate"] * 100).round(1).astype(str) + "%"
 
 st.dataframe(show_df, use_container_width=True, height=350)
 
@@ -230,9 +215,11 @@ if user_ids:
         with m2:
             st.metric("Days Since Last Watch", f"{int(row['days_since_last_watch'])}")
         with m3:
-            st.metric("Avg Watch Duration", f"{row['watch_mean']:.0f} min")
+            watch_col = "watch_mean" if "watch_mean" in row.index else "watch_last_30d"
+            watch_val = row.get(watch_col, 0)
+            st.metric("Watch (mean / 30d)", f"{watch_val:.0f} min")
         with m4:
-            st.metric("Plan", row["subscription_plan"])
+            st.metric("Plan", row.get("subscription_plan", "—"))
 
         shap_df = (
             pd.DataFrame({"feature": feat_names, "shap_value": shap_user, "feature_value": feat_vals})

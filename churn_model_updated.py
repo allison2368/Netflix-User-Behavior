@@ -45,7 +45,7 @@ RF_CLASS_WEIGHT = 'balanced'
 
 # Storage
 MODEL_SAVE_DIR = './model_outputs'
-USE_GCS = True  # Set to True to save to Google Cloud Storage
+USE_GCS = False  # Set to True to save to Google Cloud Storage
 BUCKET_NAME = 'netflix-churn-models'
 
 
@@ -314,6 +314,33 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
         print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
 
 
+def save_scored_users(df, result):
+    """
+    Add churn_probability to the full dataframe and save it to GCS (or local)
+    so the dashboard can load pre-scored data without BigQuery or model inference.
+    """
+    x_full = df[result['feature_cols']].copy()
+    x_full = x_full.apply(pd.to_numeric, errors='coerce').fillna(0)
+    x_full = x_full.replace([np.inf, -np.inf], 0)
+    df = df.copy()
+    df['churn_probability'] = result['model'].predict_proba(
+        result['scaler'].transform(x_full)
+    )[:, 1]
+
+    if USE_GCS:
+        client = storage.Client(project=PROJECT_ID)
+        bucket = client.bucket(BUCKET_NAME)
+        csv_buffer = io.StringIO()
+        df.to_csv(csv_buffer, index=False)
+        blob = bucket.blob('model_outputs/scored_users.csv')
+        blob.upload_from_string(csv_buffer.getvalue())
+        print("  ✓ scored_users.csv")
+    else:
+        os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+        df.to_csv(os.path.join(MODEL_SAVE_DIR, 'scored_users.csv'), index=False)
+        print("  ✓ scored_users.csv")
+
+
 # main function to run everything
 def main():
     """Run the complete training pipeline"""
@@ -351,6 +378,11 @@ def main():
     print(f"    No Churn (0): {test_churn_counts.get(0, 0):,}")
     print(f"    Churn Risk (1): {test_churn_counts.get(1, 0):,}")
 
+    feature_cols = result['feature_cols']
+    print(f"\n  Feature columns used in the model ({len(feature_cols)} total):")
+    for i, name in enumerate(feature_cols, 1):
+        print(f"    {i:2d}. {name}")
+
     print("\nTop 10 Most Important Features:")
     for idx, row in result['metrics']['feature_importance'].head(10).iterrows():
         print(f"  {idx+1:2d}. {row['feature']:40s} {row['importance']:.4f}")
@@ -363,6 +395,10 @@ def main():
         print(f"  Storage: Local ({MODEL_SAVE_DIR})")
 
     save_artifacts(result, scaler_rfe, kmeans, segment_profile)
+
+    # Save scored user data for dashboard (no BigQuery or model run at dashboard runtime)
+    print("\nSaving scored user data for dashboard...")
+    save_scored_users(df, result)
 
     print("\n" + "="*70)
     print("TRAINING COMPLETE!")

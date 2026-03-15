@@ -15,13 +15,13 @@ Our project introduces an interactive tool designed to support the Netflix platf
 
 ## Table of Contents
 
-- Questions of Interest
-- Our Goal
-- Data Sources
-- Software Dependencies and License Information
-- Directory Summary
-- Guide for Using the Tool
-- Project Demo
+- [Questions of Interest](#questions-of-interest)
+- [Our Goal](#our-goal)
+- [Data Sources](#data-sources)
+- [Software Dependencies and License Information](#software-dependencies-and-license-information)
+- [Directory Summary](#directory-summary)
+- [Guide for Using the Tool](#guide-for-using-the-tool)
+- [Project Demo](#project-demo)
 
 ## Questions of Interest
 
@@ -73,42 +73,7 @@ The project is built using Python 3.0+ and several open-source Python packages s
 
 ## Directory Summary
 
-/examples
-  # Example usage of the project, including demonstration images and workflows
 
-/box_office_prediction
-  # Main project module containing core code
-  /notebooks
-    # Jupyter notebooks for data cleaning, ML, and feature engineering
-  /models
-    # Saved machine learning models
-  /tests
-    # Unit and edge tests for ML pipeline and Streamlit app
-  /__pycache__
-    # Python cache files (auto-generated)
-
-/data
-  /cleaned
-    # Preprocessed datasets ready for analysis
-  /raw
-    # Raw datasets as downloaded from Kaggle 
-
-/docs
-  # Documentation including functional specification, component specification, milestones, and technology reviews.
-
-/scripts
-  # Scripts for preprocessing, feature engineering, and utility functions
-  /__pycache__
-    # Python cache files (auto-generated)
-
-/app
-  # Streamlit application code for interactive dashboards
-
-/setup.py or pyproject.toml
-  # Project installation and packaging configuration
-
-README.md
-  # Project overview, instructions, and functional specification
 
 ## Guide for Using the Tool
 

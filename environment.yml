@@ -17,3 +17,4 @@ dependencies:
       - db-dtypes
       - imbalanced-learn
       - shap
+      - pytest

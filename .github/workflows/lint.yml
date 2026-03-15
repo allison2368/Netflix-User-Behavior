@@ -28,3 +28,6 @@ jobs:
       - name: Run pylint
         if: steps.changed_files.outputs.files != ''
         run: pylint ${{ steps.changed_files.outputs.files }}
+
+      - name: Run tests
+        run: pytest tests/

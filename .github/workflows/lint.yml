@@ -17,7 +17,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install dependencies
-        run: pip install pylint
+        run: pip install pylint pytest
 
       - name: Get changed Python files
         id: changed_files

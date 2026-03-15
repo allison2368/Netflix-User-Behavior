@@ -19,8 +19,28 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: "Get Python files to lint (PR: only changed .py; push: all .py)"
+        id: pyfiles
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --name-only --diff-filter=ACMR ${{ github.event.pull_request.base.sha }} HEAD -- '*.py' > changed.txt
+          else
+            git ls-files '*.py' > changed.txt
+          fi
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat changed.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Run pylint
-        run: pylint $(git ls-files '*.py')
+        env:
+          PYTHONPATH: .
+        run: |
+          FILES="${{ steps.pyfiles.outputs.files }}"
+          if [ -n "$FILES" ]; then
+            echo "$FILES" | xargs pylint
+          else
+            echo "No Python files to lint (PR has no changed .py files)"
+          fi
 
       - name: Run tests
         run: pytest tests/

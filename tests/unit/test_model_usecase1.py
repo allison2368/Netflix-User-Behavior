@@ -1,31 +1,43 @@
-import pandas as pd
+"""Unit tests for churn model use case 1 (churn_model_updated pipeline)."""
+
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
-import pytest
-from churn_model.churn_model_updated import prepare_features, create_segments, train_model, load_data
+import pandas as pd
+import pytest  # pylint: disable=import-error
+
+from churn_model import churn_model_updated as churn_module
+from churn_model.churn_model_updated import (
+    prepare_features,
+    create_segments,
+    train_model,
+    load_data,
+)
 
 
 def test_prepare_features_creates_target():
+    """Check that prepare_features creates a binary target from watch_decline_ratio."""
     df = pd.DataFrame({
-        "user_id":[1,2],
-        "watch_decline_ratio":[0.1,0.5],
-        "watch_last_7d":[5,10],
-        "total_watch_minutes":[100,200],
-        "is_active":[1,1],
-        "feature1":[3,4]
+        "user_id": [1, 2],
+        "watch_decline_ratio": [0.1, 0.5],
+        "watch_last_7d": [5, 10],
+        "total_watch_minutes": [100, 200],
+        "is_active": [1, 1],
+        "feature1": [3, 4],
     })
 
-    X, y, _ = prepare_features(df)
+    _, y, _ = prepare_features(df)
 
     assert len(y) == 2
-    assert set(y.unique()).issubset({0,1})
+    assert set(y.unique()).issubset({0, 1})
 
 
 def test_create_segments():
+    """Check that create_segments adds a segment column."""
     df = pd.DataFrame({
         "days_since_last_watch": np.random.rand(20),
         "total_sessions": np.random.rand(20),
-        "avg_completion_rate": np.random.rand(20)
+        "avg_completion_rate": np.random.rand(20),
     })
 
     df_out, _, _, _ = create_segments(df)
@@ -34,7 +46,7 @@ def test_create_segments():
 
 
 def test_train_model_runs():
-
+    """Check that train_model runs and returns a result with metrics."""
     n = 100
 
     df = pd.DataFrame({
@@ -42,9 +54,9 @@ def test_train_model_runs():
         "watch_decline_ratio": np.random.rand(n),
         "watch_last_7d": np.random.rand(n),
         "total_watch_minutes": np.random.rand(n),
-        "is_active": np.random.randint(0,2,n),
+        "is_active": np.random.randint(0, 2, n),
         "feature1": np.random.rand(n),
-        "feature2": np.random.rand(n)
+        "feature2": np.random.rand(n),
     })
 
     result = train_model(df)
@@ -159,7 +171,7 @@ def test_train_model_single_class():
         "watch_last_7d": np.random.rand(n),
         "total_watch_minutes": np.random.rand(n),
         "is_active": np.ones(n),
-        "feature1": np.random.rand(n)
+        "feature1": np.random.rand(n),
     })
 
     result = train_model(df)
@@ -187,7 +199,7 @@ def test_train_model_high_class_imbalance():
         "watch_last_7d": np.random.rand(n),
         "total_watch_minutes": np.random.rand(n),
         "is_active": np.random.randint(0, 2, n),
-        "feature1": np.random.rand(n)
+        "feature1": np.random.rand(n),
     })
 
     result = train_model(df)
@@ -220,18 +232,18 @@ def test_load_data_fills_na(mock_client):
 @patch("churn_model.churn_model_updated.bigquery.Client")
 def test_load_data_query_failure(mock_client):
     """Ensure load_data propagates BigQuery errors."""
-
     mock_client.return_value.query.side_effect = Exception("BigQuery error")
 
     with pytest.raises(Exception):
         load_data()
-    
+
+
 @patch("churn_model.churn_model_updated.bigquery.Client")
 def test_load_data(mock_client):
-
+    """Ensure load_data returns dataframe from BigQuery mock."""
     fake_df = pd.DataFrame({
-        "user_id":[1],
-        "watch_decline_ratio":[0.2]
+        "user_id": [1],
+        "watch_decline_ratio": [0.2],
     })
 
     mock_job = MagicMock()
@@ -241,101 +253,64 @@ def test_load_data(mock_client):
     df = load_data()
 
     assert len(df) == 1
-    
-	#--------------------------------------------------
-    # add more tests for code coverage
-    #--------------------------------------------------
-    
-def test_load_data_fills_na():
-    """Test that load_data fills missing values with 0."""
-    import pandas as pd
-    from unittest.mock import patch, MagicMock
-    from churn_model.churn_model_updated import load_data
 
-    mock_df = pd.DataFrame({
-        "a": [1, None],
-        "b": [None, 2]
-    })
 
-    mock_job = MagicMock()
-    mock_job.result.return_value.to_dataframe.return_value = mock_df
-
-    with patch("churn_model.churn_model_updated.bigquery.Client") as mock_client:
-        mock_client.return_value.query.return_value = mock_job
-
-        df = load_data()
-
-    assert df.isna().sum().sum() == 0
-    
 def test_create_segments_adds_segment():
-    """Ensure segmentation adds cluster column."""
-    import pandas as pd
-    from churn_model.churn_model_updated import create_segments
-
+    """Ensure segmentation adds cluster column and profile has rows."""
     df = pd.DataFrame({
-        "days_since_last_watch":[1,2,3,4],
-        "total_sessions":[5,6,7,8],
-        "avg_completion_rate":[0.3,0.5,0.6,0.8]
+        "days_since_last_watch": [1, 2, 3, 4],
+        "total_sessions": [5, 6, 7, 8],
+        "avg_completion_rate": [0.3, 0.5, 0.6, 0.8],
     })
 
-    df_out, scaler, kmeans, profile = create_segments(df)
+    df_out, _scaler, _kmeans, profile = create_segments(df)
 
     assert "segment" in df_out.columns
     assert profile.shape[0] > 0
-    
-def test_save_artifacts_local(tmp_path):
-    """Test saving artifacts locally."""
-    import pandas as pd
-    from churn_model import churn_model_updated as cm
 
-    cm.MODEL_SAVE_DIR = tmp_path
-    cm.USE_GCS = False
+
+def test_save_artifacts_local(tmp_path):
+    """Test saving artifacts locally when USE_GCS is False."""
+    churn_module.MODEL_SAVE_DIR = tmp_path
+    churn_module.USE_GCS = False
 
     result = {
         "model": None,
         "scaler": None,
-        "feature_cols": ["a","b"],
-        "metrics":{
+        "feature_cols": ["a", "b"],
+        "metrics": {
             "feature_importance": pd.DataFrame({
-                "feature":["a","b"],
-                "importance":[0.6,0.4]
-            })
-        }
+                "feature": ["a", "b"],
+                "importance": [0.6, 0.4],
+            }),
+        },
     }
 
     scaler_rfe = None
     kmeans = None
-    segment_profile = pd.DataFrame({"x":[1,2]})
+    segment_profile = pd.DataFrame({"x": [1, 2]})
 
-    cm.save_artifacts(result, scaler_rfe, kmeans, segment_profile)
+    churn_module.save_artifacts(result, scaler_rfe, kmeans, segment_profile)
 
     assert (tmp_path / "rf_model.pkl").exists()
-    
-def test_main_pipeline_runs():
-    """Test full pipeline execution."""
-    from unittest.mock import patch, MagicMock
-    import pandas as pd
-    from churn_model import churn_model_updated as cm
 
+
+def test_main_pipeline_runs():
+    """Test full pipeline execution (main) with mocked load_data and save_artifacts."""
     fake_df = pd.DataFrame({
-        "user_id":[1,2,3,4],
-        "watch_decline_ratio":[0.1,0.5,0.3,0.6],
-        "watch_last_7d":[1,1,1,1],
-        "total_watch_minutes":[10,20,30,40],
-        "is_active":[1,1,1,1],
-        "days_since_last_watch":[1,2,3,4],
-        "total_sessions":[1,2,3,4],
-        "avg_completion_rate":[0.5,0.6,0.7,0.8]
+        "user_id": [1, 2, 3, 4],
+        "watch_decline_ratio": [0.1, 0.5, 0.3, 0.6],
+        "watch_last_7d": [1, 1, 1, 1],
+        "total_watch_minutes": [10, 20, 30, 40],
+        "is_active": [1, 1, 1, 1],
+        "days_since_last_watch": [1, 2, 3, 4],
+        "total_sessions": [1, 2, 3, 4],
+        "avg_completion_rate": [0.5, 0.6, 0.7, 0.8],
     })
 
-    with patch.object(cm, "load_data", return_value=fake_df), \
-         patch.object(cm, "save_artifacts"), \
-         patch.object(cm, "create_segments") as mock_seg:
-
+    with patch.object(churn_module, "load_data", return_value=fake_df), \
+         patch.object(churn_module, "save_artifacts"), \
+         patch.object(churn_module, "create_segments") as mock_seg:
         mock_seg.return_value = (fake_df, None, None, fake_df)
 
-        cm.main()
-
-
-
-
+        churn_module.main()

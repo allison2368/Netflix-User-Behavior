@@ -24,6 +24,10 @@ import seaborn as sns
 
 import churn_model as cm
 
+UC2_TEAL         = "#1D9E75"
+UC2_AMBER        = "#BA7517"
+UC2_ORIGIN_COLORS = {"Netflix Original": UC2_TEAL, "Licensed": UC2_AMBER}
+
 # BigQuery imports for Use Case 3
 try:
     from dotenv import load_dotenv
@@ -1102,86 +1106,655 @@ def show_marketing_campaign(artifacts):
 
 
 # ============================================================================
-# USE CASE 2: CONTENT INVESTMENT (SARAH) - PLACEHOLDER
+# USE CASE 2: CONTENT INVESTMENT (SARAH) 
 # ============================================================================
-
+@st.cache_data(show_spinner="Loading content data from BigQuery…")
+def load_uc2_data() -> tuple:
+    """Load session-level and title-level data for Use Case 2.
+ 
+    Returns:
+        df      : session-level joined table (watch + movies + churn)
+        title_df: title-level aggregated yield table
+    """
+    client = bigquery.Client(project=PROJECT_ID)
+ 
+    session_sql = """
+        SELECT
+            w.session_id,
+            w.user_id,
+            w.movie_id,
+            w.watch_date,
+            w.watch_duration_minutes,
+            w.progress_percentage,
+            m.title,
+            m.imdb_rating,
+            m.genre_primary,
+            m.content_type,
+            m.is_netflix_original,
+            m.is_series,
+            m.release_year,
+            c.is_active,
+            c.watch_decline_ratio,
+            c.engagement_ratio_7v30,
+            c.watch_last_7d,
+            c.watch_last_30d,
+            c.monthly_spend,
+            c.tenure_days,
+            c.subscription_plan,
+            c.avg_completion_rate   AS lifetime_completion
+        FROM `netflix-user-behavior.kaggle_cleaned.watch_history_cleaned` w
+        JOIN `netflix-user-behavior.kaggle_cleaned.movies_cleaned`        m  USING (movie_id)
+        JOIN `netflix-user-behavior.kaggle_cleaned.churn_features`        c  USING (user_id)
+        WHERE m.imdb_rating IS NOT NULL
+    """
+ 
+    title_sql = """
+        SELECT
+            w.movie_id,
+            m.title,
+            m.imdb_rating,
+            m.genre_primary,
+            m.content_type,
+            m.is_netflix_original,
+            m.is_series,
+            COUNT(w.session_id)              AS total_sessions,
+            SUM(w.watch_duration_minutes)    AS total_watch_minutes,
+            AVG(w.watch_duration_minutes)    AS avg_watch_duration,
+            AVG(w.progress_percentage)       AS avg_completion,
+            COUNT(DISTINCT w.user_id)        AS unique_viewers
+        FROM `netflix-user-behavior.kaggle_cleaned.watch_history_cleaned` w
+        JOIN `netflix-user-behavior.kaggle_cleaned.movies_cleaned`        m USING (movie_id)
+        WHERE m.imdb_rating IS NOT NULL
+        GROUP BY 1,2,3,4,5,6,7
+    """
+ 
+    df       = client.query(session_sql).result().to_dataframe()
+    title_df = client.query(title_sql).result().to_dataframe()
+    return df, title_df
+ 
+ 
+def _uc2_preprocess(df: pd.DataFrame, title_df: pd.DataFrame):
+    """Add derived columns (IMDb bucket, origin label) for Use Case 2.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+        title_df (pd.DataFrame): Title-level dataframe.
+ 
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: Updated dataframes.
+    """
+    imdb_bins   = [0, 5, 6, 7, 8, 9, 10]
+    imdb_labels = ["0-5", "5-6", "6-7", "7-8", "8-9", "9-10"]
+ 
+    for frame in [df, title_df]:
+        frame["imdb_bucket"] = pd.cut(
+            frame["imdb_rating"], bins=imdb_bins,
+            labels=imdb_labels, right=True, include_lowest=True,
+        )
+        frame["origin_label"] = np.where(
+            frame["is_netflix_original"], "Netflix Original", "Licensed"
+        )
+ 
+    return df, title_df
+ 
+ 
+def _uc2_apply_filters(
+    df: pd.DataFrame,
+    sel_genres: list,
+    sel_plans: list,
+    origin: str,
+) -> pd.DataFrame:
+    """Apply inline filters to the session-level dataframe.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+        sel_genres (list): Selected genre values.
+        sel_plans (list): Selected subscription plan values.
+        origin (str): Selected content origin ("All", "Netflix Original", "Licensed").
+ 
+    Returns:
+        pd.DataFrame: Filtered dataframe.
+    """
+    mask = (
+        df["genre_primary"].isin(sel_genres)
+        & df["subscription_plan"].isin(sel_plans)
+    )
+    if origin != "All":
+        mask &= df["origin_label"] == origin
+    return df[mask].copy()
+ 
+ 
+def _uc2_render_kpis(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
+    """Render top-level KPIs for the content portfolio.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    st.subheader("📊 Portfolio Overview")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    n_orig     = title_df["is_netflix_original"].sum()
+    n_licensed = (~title_df["is_netflix_original"]).sum()
+    c1.metric("Total titles",      f"{len(title_df):,}")
+    c2.metric("Netflix Originals", f"{n_orig:,}")
+    c3.metric("Licensed titles",   f"{n_licensed:,}")
+    c4.metric(
+        "Avg IMDb (Originals)",
+        f"{title_df[title_df.is_netflix_original]['imdb_rating'].mean():.2f}",
+    )
+    c5.metric(
+        "Avg IMDb (Licensed)",
+        f"{title_df[~title_df.is_netflix_original]['imdb_rating'].mean():.2f}",
+    )
+    c6.metric("Active subscriber %", f"{df['is_active'].mean() * 100:.1f}%")
+ 
+ 
+def _uc2_render_quality_origin(df: pd.DataFrame) -> None:
+    """Render quality tier × origin type analysis (completion and watch duration).
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+    """
+    import matplotlib.ticker as mticker
+ 
+    st.subheader("1️⃣ Quality Tier × Origin Type → Retention")
+    st.caption(
+        "Does high-rated content drive more engagement, "
+        "and does origin type amplify that effect?"
+    )
+ 
+    agg = (
+        df.groupby(["origin_label", "imdb_bucket"], observed=True)
+        .agg(
+            avg_completion=("progress_percentage",    "mean"),
+            avg_duration  =("watch_duration_minutes", "mean"),
+            sessions      =("session_id",             "count"),
+        )
+        .reset_index()
+    )
+ 
+    col1, col2 = st.columns(2)
+ 
+    with col1:
+        fig, ax = plt.subplots(figsize=(6, 4))
+        for origin, color in UC2_ORIGIN_COLORS.items():
+            sub = agg[agg["origin_label"] == origin]
+            ax.plot(sub["imdb_bucket"].astype(str), sub["avg_completion"],
+                    marker="o", linewidth=2.5, markersize=7,
+                    color=color, label=origin)
+        ax.set_xlabel("IMDb Rating Bucket")
+        ax.set_ylabel("Avg Completion Rate (%)")
+        ax.set_title("Completion Rate by Quality Tier & Origin",
+                     fontsize=11, fontweight="bold")
+        ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f%%"))
+        ax.legend(fontsize=9)
+        ax.grid(alpha=0.25)
+        st.pyplot(fig)
+        plt.close(fig)
+ 
+    with col2:
+        fig, ax = plt.subplots(figsize=(6, 4))
+        for origin, color in UC2_ORIGIN_COLORS.items():
+            sub = agg[agg["origin_label"] == origin]
+            ax.plot(sub["imdb_bucket"].astype(str), sub["avg_duration"],
+                    marker="o", linewidth=2.5, markersize=7,
+                    color=color, label=origin)
+        ax.set_xlabel("IMDb Rating Bucket")
+        ax.set_ylabel("Avg Watch Duration (min)")
+        ax.set_title("Watch Duration by Quality Tier & Origin",
+                     fontsize=11, fontweight="bold")
+        ax.legend(fontsize=9)
+        ax.grid(alpha=0.25)
+        st.pyplot(fig)
+        plt.close(fig)
+ 
+    pivot = agg.pivot_table(
+        index="imdb_bucket", columns="origin_label",
+        values="avg_completion", aggfunc="mean",
+    ).round(1)
+ 
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.heatmap(pivot, ax=ax, annot=True, fmt=".1f", cmap="YlGnBu",
+                linewidths=0.4, cbar_kws={"label": "Avg Completion %"})
+    ax.set_title("Completion % Heatmap — Quality × Origin",
+                 fontsize=11, fontweight="bold")
+    ax.set_xlabel("")
+    ax.set_ylabel("IMDb Bucket")
+    ax.tick_params(axis="x", rotation=0)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+    with st.expander("📋 Full table"):
+        st.dataframe(agg.round(2), use_container_width=True)
+ 
+ 
+def _uc2_render_kpi_cards(health: pd.DataFrame) -> None:
+    """Render subscriber health KPI cards for each origin.
+ 
+    Args:
+        health (pd.DataFrame): Aggregated health metrics by origin label.
+    """
+    for _, row in health.iterrows():
+        color = UC2_TEAL if row["origin_label"] == "Netflix Original" else UC2_AMBER
+        st.markdown(
+            f"<h4 style='color:{color}'>{row['origin_label']}</h4>",
+            unsafe_allow_html=True,
+        )
+        cols = st.columns(6)
+        cols[0].metric("Active rate",    f"{row['active_rate']*100:.1f}%")
+        cols[1].metric("Avg spend/mo",   f"${row['avg_monthly_spend']:.2f}")
+        cols[2].metric("Avg tenure",     f"{row['avg_tenure_days']:.0f}d")
+        cols[3].metric("Watch decline",  f"{row['avg_watch_decline']:.2f}")
+        cols[4].metric("7v30 ratio",     f"{row['avg_engagement_ratio']:.2f}")
+        cols[5].metric("Watch last 30d", f"{row['avg_watch_last30']:.0f} min")
+ 
+ 
+def _uc2_plot_health_bar(health: pd.DataFrame) -> None:
+    """Render bar chart comparing subscriber health metrics by origin.
+ 
+    Args:
+        health (pd.DataFrame): Aggregated health metrics by origin label.
+    """
+    metrics = ["active_rate", "avg_engagement_ratio", "avg_watch_decline"]
+    labels  = ["Active Rate", "Engagement 7v30", "Watch Decline Ratio"]
+ 
+    fig, ax = plt.subplots(figsize=(8, 4))
+    x     = np.arange(len(metrics))
+    width = 0.35
+ 
+    for i, (origin, color) in enumerate(UC2_ORIGIN_COLORS.items()):
+        subset = health[health["origin_label"] == origin]
+        if subset.empty:
+            continue
+        heights = [subset[m].values[0] for m in metrics]
+        ax.bar(x + i * width, heights, width=width,
+               color=color, alpha=0.85, label=origin)
+        for xi, h in zip(x + i * width, heights):
+            ax.text(xi, h + 0.01, f"{h:.2f}",
+                    ha="center", va="bottom", fontsize=9)
+ 
+    ax.set_xticks(x + width / 2)
+    ax.set_xticklabels(labels)
+    ax.set_title("Subscriber Health — High-Rated Content Viewers (IMDb ≥ 7)")
+    ax.legend()
+    ax.grid(alpha=0.2)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+ 
+def _uc2_plot_active_rate_by_bucket(df: pd.DataFrame) -> None:
+    """Render active subscriber rate by IMDb bucket and origin.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+    """
+    import matplotlib.ticker as mticker
+ 
+    high_rated = df[df["imdb_rating"] >= 7].copy()
+    active_agg = (
+        high_rated.groupby(["origin_label", "imdb_bucket"], observed=True)
+        .agg(active_rate=("is_active", "mean"))
+        .reset_index()
+    )
+ 
+    fig, ax = plt.subplots(figsize=(7, 4))
+    for origin, color in UC2_ORIGIN_COLORS.items():
+        sub = active_agg[active_agg["origin_label"] == origin]
+        ax.plot(
+            sub["imdb_bucket"].astype(str),
+            sub["active_rate"] * 100,
+            marker="o", linewidth=2.5, markersize=7,
+            color=color, label=origin,
+        )
+    ax.set_xlabel("IMDb Rating Bucket")
+    ax.set_ylabel("Active Subscriber Rate (%)")
+    ax.set_title("Active Rate by Quality Tier & Origin",
+                 fontsize=11, fontweight="bold")
+    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f%%"))
+    ax.legend(fontsize=9)
+    ax.grid(alpha=0.25)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+ 
+def _uc2_render_subscriber_health(df: pd.DataFrame) -> None:
+    """Render subscriber health analysis for high-rated content viewers.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+    """
+    st.subheader("2️⃣ High-Rated Originals vs Licensed → Subscriber Health")
+    st.caption(
+        "Among users who watch high-rated content (IMDb ≥ 7), "
+        "do Netflix Originals produce healthier subscribers?"
+    )
+ 
+    high_rated = df[df["imdb_rating"] >= 7].copy()
+ 
+    health = (
+        high_rated.groupby("origin_label")
+        .agg(
+            users               =("user_id",             "nunique"),
+            active_rate         =("is_active",           "mean"),
+            avg_monthly_spend   =("monthly_spend",       "mean"),
+            avg_tenure_days     =("tenure_days",         "mean"),
+            avg_watch_decline   =("watch_decline_ratio", "mean"),
+            avg_engagement_ratio=("engagement_ratio_7v30","mean"),
+            avg_watch_last30    =("watch_last_30d",      "mean"),
+        )
+        .reset_index()
+        .round(3)
+    )
+ 
+    _uc2_render_kpi_cards(health)
+    st.divider()
+    _uc2_plot_health_bar(health)
+    _uc2_plot_active_rate_by_bucket(df)
+ 
+ 
+def _uc2_plot_yield_box(title_df: pd.DataFrame) -> None:
+    """Boxplot of sessions per title by origin.
+ 
+    Args:
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    fig, ax = plt.subplots(figsize=(6, 4))
+    data_orig = title_df[title_df["origin_label"] == "Netflix Original"]["total_sessions"]
+    data_lic  = title_df[title_df["origin_label"] == "Licensed"]["total_sessions"]
+ 
+    bp = ax.boxplot(
+        [data_orig, data_lic],
+        labels=["Netflix Original", "Licensed"],
+        patch_artist=True,
+        medianprops={"color": "white", "linewidth": 2},
+    )
+    bp["boxes"][0].set_facecolor(UC2_TEAL)
+    bp["boxes"][1].set_facecolor(UC2_AMBER)
+    for patch in bp["boxes"]:
+        patch.set_alpha(0.75)
+ 
+    ax.set_ylabel("Total Sessions per Title")
+    ax.set_title("Session Yield per Title by Origin",
+                 fontsize=11, fontweight="bold")
+    ax.grid(axis="y", alpha=0.3)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+ 
+def _uc2_plot_yield_scatter(title_df: pd.DataFrame) -> None:
+    """Scatterplot of IMDb rating vs total sessions by origin.
+ 
+    Args:
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    fig, ax = plt.subplots(figsize=(6, 4))
+    for origin, color in UC2_ORIGIN_COLORS.items():
+        sub = title_df[title_df["origin_label"] == origin]
+        ax.scatter(sub["imdb_rating"], sub["total_sessions"],
+                   alpha=0.4, s=20, color=color, label=origin)
+    ax.set_xlabel("IMDb Rating")
+    ax.set_ylabel("Total Sessions")
+    ax.set_title("IMDb Rating vs Session Yield per Title",
+                 fontsize=11, fontweight="bold")
+    ax.legend(fontsize=9)
+    ax.grid(alpha=0.2)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+ 
+def _uc2_plot_yield_lines(title_df: pd.DataFrame) -> None:
+    """Line plots for avg sessions and watch minutes by origin and IMDb bucket.
+ 
+    Args:
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    yield_agg = (
+        title_df.groupby(["origin_label", "imdb_bucket"], observed=True)
+        .agg(
+            avg_sessions     =("total_sessions",      "mean"),
+            avg_watch_minutes=("total_watch_minutes", "mean"),
+            avg_viewers      =("unique_viewers",      "mean"),
+            title_count      =("movie_id",            "count"),
+        )
+        .reset_index()
+        .round(1)
+    )
+ 
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4))
+    for ax, metric, label in zip(
+        axes,
+        ["avg_sessions", "avg_watch_minutes"],
+        ["Avg Sessions per Title", "Avg Total Watch Minutes per Title"],
+    ):
+        for origin, color in UC2_ORIGIN_COLORS.items():
+            sub = yield_agg[yield_agg["origin_label"] == origin]
+            ax.plot(sub["imdb_bucket"].astype(str), sub[metric],
+                    marker="o", linewidth=2.5, markersize=7,
+                    color=color, label=origin)
+        ax.set_xlabel("IMDb Rating Bucket")
+        ax.set_ylabel(label)
+        ax.set_title(f"{label} by Quality Tier",
+                     fontsize=11, fontweight="bold")
+        ax.legend(fontsize=9)
+        ax.grid(alpha=0.25)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+ 
+def _uc2_render_content_yield(title_df: pd.DataFrame) -> None:
+    """Render content yield analysis (sessions and watch minutes per title).
+ 
+    Args:
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    st.subheader("3️⃣ Content Yield per Title")
+    st.caption(
+        "Which titles punch above their weight? Sessions and watch minutes per title, "
+        "by origin and quality."
+    )
+ 
+    col1, col2 = st.columns(2)
+    with col1:
+        _uc2_plot_yield_box(title_df)
+    with col2:
+        _uc2_plot_yield_scatter(title_df)
+ 
+    _uc2_plot_yield_lines(title_df)
+ 
+    st.markdown("**Top 15 Titles by Total Sessions**")
+    top_titles = (
+        title_df.sort_values("total_sessions", ascending=False)
+        .head(15)[
+            ["title", "origin_label", "imdb_rating", "genre_primary",
+             "total_sessions", "unique_viewers", "avg_completion"]
+        ]
+        .round(2)
+        .reset_index(drop=True)
+    )
+    st.dataframe(top_titles, use_container_width=True)
+ 
+ 
+def _uc2_render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
+    """Render genre-level analysis comparing Netflix Originals vs Licensed content.
+ 
+    Args:
+        df (pd.DataFrame): Session-level dataframe.
+        title_df (pd.DataFrame): Title-level dataframe.
+    """
+    st.subheader("4️⃣ Genre Breakdown by Origin Type")
+    st.caption(
+        "Where do Netflix Originals outperform licensed content at the genre level?"
+    )
+ 
+    genre_agg = (
+        df.groupby(["origin_label", "genre_primary"], observed=True)
+        .agg(
+            avg_completion=("progress_percentage",    "mean"),
+            avg_duration  =("watch_duration_minutes", "mean"),
+            sessions      =("session_id",             "count"),
+        )
+        .reset_index()
+        .round(2)
+    )
+ 
+    pivot_completion = genre_agg.pivot_table(
+        index="genre_primary", columns="origin_label",
+        values="avg_completion", aggfunc="mean",
+    ).round(1)
+ 
+    if "Netflix Original" in pivot_completion.columns and "Licensed" in pivot_completion.columns:
+        pivot_completion["gap (Orig − Lic)"] = (
+            pivot_completion["Netflix Original"] - pivot_completion["Licensed"]
+        ).round(1)
+        pivot_completion = pivot_completion.sort_values("gap (Orig − Lic)", ascending=False)
+ 
+    fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_completion) * 0.45)))
+    sns.heatmap(
+        pivot_completion, ax=ax, annot=True, fmt=".1f",
+        cmap="RdYlGn", center=0,
+        linewidths=0.4, cbar_kws={"label": "Avg Completion %"},
+    )
+    ax.set_title(
+        "Completion % by Genre × Origin  (gap = Original − Licensed)",
+        fontsize=11, fontweight="bold",
+    )
+    ax.set_xlabel("")
+    ax.set_ylabel("Genre")
+    ax.tick_params(axis="x", rotation=0)
+    ax.tick_params(axis="y", rotation=0)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+    title_counts = (
+        title_df.groupby(["origin_label", "genre_primary"], observed=True)
+        .agg(title_count=("movie_id", "count"))
+        .reset_index()
+    )
+    pivot_count = title_counts.pivot_table(
+        index="genre_primary", columns="origin_label",
+        values="title_count", aggfunc="sum", fill_value=0,
+    )
+ 
+    fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_count) * 0.45)))
+    sns.heatmap(pivot_count, ax=ax, annot=True, fmt=".0f", cmap="Blues",
+                linewidths=0.4, cbar_kws={"label": "Number of Titles"})
+    ax.set_title(
+        "Title Count by Genre × Origin  (volume vs quality trade-off)",
+        fontsize=11, fontweight="bold",
+    )
+    ax.set_xlabel("")
+    ax.tick_params(axis="x", rotation=0)
+    ax.tick_params(axis="y", rotation=0)
+    st.pyplot(fig)
+    plt.close(fig)
+ 
+    with st.expander("📋 Full genre breakdown"):
+        st.dataframe(genre_agg, use_container_width=True)
+        
 def show_content_investment(artifacts):
     st.header("📺 USE CASE 2: Content Investment Optimization")
-    
+ 
     st.markdown("""
-    **Actor:** Sarah, Content Acquisition/Studio Executive  
-    **Goal:** Track ROI of content library and make renewal decisions  
+    **Actor:** Sarah, Content Acquisition/Studio Executive
+    **Goal:** Track ROI of content library and make renewal decisions
     **Action:** Analyze content quality vs. retention impact
     """)
-    
+ 
     st.markdown("---")
-    
-    st.info("""
-    ### 🚧 Under Development
-    
-    This dashboard page will include:
-    
-    **Features to be implemented by team:**
-    1. **Quality Elasticity Chart** - Correlation between IMDB ratings and completion rates
-    2. **Title Performance Matrix** - Content metadata × user sentiment analysis
-    3. **Revenue Exposure Calculator** - LTV impact per content category
-    4. **Renewal Recommendations** - Data-driven content acquisition decisions
-    
-    **Data Sources:**
-    - `movies.csv` - Content metadata and ratings
-    - `watch_history.csv` - Viewing completion rates
-    - `reviews.csv` - User sentiment scores
-    - TMDb API - External rating validation
-    
-    **Filters Available:**
-    - Top 20% LTV users
-    - Active in last 60 days
-    - Rating buckets (8.0+, 7.0-8.0, etc.)
-    - Genre categories
-    """)
-    
-    # Placeholder visualization
-    st.subheader("Sample Visualization Structure")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Sample content performance chart
-        sample_data = pd.DataFrame({
-            'Rating Range': ['9.0+', '8.0-9.0', '7.0-8.0', '6.0-7.0', '<6.0'],
-            'Avg Completion': [0.85, 0.75, 0.65, 0.55, 0.40],
-            'User Count': [5000, 15000, 25000, 20000, 10000]
-        })
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=sample_data['Rating Range'],
-            y=sample_data['Avg Completion'],
-            marker_color='#E50914',
-            name='Completion Rate'
-        ))
-        
-        fig.update_layout(
-            title="[DEMO] Completion Rate by Content Rating",
-            yaxis_title="Average Completion Rate",
-            xaxis_title="IMDB Rating Range",
-            template="plotly_dark"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.markdown("### Implementation Checklist")
-        st.markdown("""
-        - [ ] Connect to `movies.csv` table
-        - [ ] Join with `watch_history.csv`
-        - [ ] Calculate completion rates per title
-        - [ ] Integrate TMDb API for ratings
-        - [ ] Build quality elasticity model
-        - [ ] Create performance matrix
-        - [ ] Add export functionality
+ 
+    if not BIGQUERY_AVAILABLE:
+        st.info("""
+        ### 🚧 Under Development
+ 
+        This dashboard page will include:
+ 
+        **Features to be implemented by team:**
+        1. **Quality Elasticity Chart** - Correlation between IMDB ratings and completion rates
+        2. **Title Performance Matrix** - Content metadata × user sentiment analysis
+        3. **Revenue Exposure Calculator** - LTV impact per content category
+        4. **Renewal Recommendations** - Data-driven content acquisition decisions
+ 
+        **Data Sources:**
+        - `movies.csv` - Content metadata and ratings
+        - `watch_history.csv` - Viewing completion rates
+        - `reviews.csv` - User sentiment scores
+        - TMDb API - External rating validation
+ 
+        **Filters Available:**
+        - Top 20% LTV users
+        - Active in last 60 days
+        - Rating buckets (8.0+, 7.0-8.0, etc.)
+        - Genre categories
         """)
-
+        return
+ 
+    if not PROJECT_ID:
+        st.error("""
+        ❌ **Missing BigQuery Configuration**
+ 
+        Please create a `.env` file with your PROJECT_ID:
+        ```
+        PROJECT_ID=your-project-id
+        ```
+        """)
+        return
+ 
+    try:
+        df_raw, title_df_raw = load_uc2_data()
+        df, title_df         = _uc2_preprocess(df_raw.copy(), title_df_raw.copy())
+ 
+        # ── Inline filters (replaces use_case_2_app sidebar) ──────────────────
+        with st.expander("🎛️ Filters", expanded=False):
+            col1, col2, col3 = st.columns(3)
+ 
+            with col1:
+                genres     = sorted(df["genre_primary"].dropna().unique())
+                sel_genres = st.multiselect(
+                    "Genre", genres, default=genres, key="uc2_genres"
+                )
+ 
+            with col2:
+                plans     = sorted(df["subscription_plan"].dropna().unique())
+                sel_plans = st.multiselect(
+                    "Subscription plan", plans, default=plans, key="uc2_plans"
+                )
+ 
+            with col3:
+                origin = st.radio(
+                    "Content origin",
+                    ["All", "Netflix Original", "Licensed"],
+                    key="uc2_origin",
+                )
+ 
+        df = _uc2_apply_filters(df, sel_genres, sel_plans, origin)
+ 
+        if df.empty:
+            st.warning("No data matches current filters.")
+            return
+ 
+        _uc2_render_kpis(df, title_df)
+        st.divider()
+        _uc2_render_quality_origin(df)
+        st.divider()
+        _uc2_render_subscriber_health(df)
+        st.divider()
+        _uc2_render_content_yield(title_df)
+        st.divider()
+        _uc2_render_genre_origin(df, title_df)
+ 
+    except Exception as e:
+        st.error(f"""
+        ❌ **Error loading content analytics**
+ 
+        Error: {str(e)}
+ 
+        This may be due to:
+        - Missing BigQuery credentials
+        - Network connectivity issues
+        - Missing data in BigQuery tables
+ 
+        Please check your `.env` file and BigQuery setup.
+        """)
 
 # ============================================================================
 # USE CASE 3: FEATURE ENGAGEMENT (PUJA) 

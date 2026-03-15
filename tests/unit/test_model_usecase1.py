@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from unittest.mock import patch, MagicMock
 
-from churn_model_updated import prepare_features, create_segments, train_model, load_data
+from churn_model.churn_model_updated import prepare_features, create_segments, train_model, load_data
 
 
 def test_prepare_features_creates_target():

@@ -4,6 +4,9 @@ import styles
 import landing
 from churn_model import churn_model_updated as cm
 from usecase1.usecase1_app import run_usecase_1
+from usecase2.usecase2_app import run_usecase_2
+from usecase3.usecase3_app import run_usecase_3
+
 
 # Initial Configuration
 st.set_page_config(
@@ -99,10 +102,9 @@ def main():
         if page == "🎯 Marketing Campaign (Marcus)":
             run_usecase_1()
         elif page == "📺 Content Investment (Sarah)":
-            show_placeholder("Content Investment Strategy")
+            # show_placeholder("Content Investment Strategy")
+            run_usecase_2()
         elif page == "💡 Feature Engagement (Puja)":
-            # Call run_usecase_3 from usecase3.usecase3_app as requested
-            from usecase3.usecase3_app import run_usecase_3
             run_usecase_3()
         elif page == "📊 Model Performance":
             # Display model metrics logic

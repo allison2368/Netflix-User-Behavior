@@ -9,7 +9,7 @@ Run:
 """
 
 import streamlit as st
-import usecase2 as uc2
+from . import usecase2 as uc2 # Import logic module
 
 st.set_page_config(
     page_title="Content Investment · Sarah",
@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 
-def main() -> None:
+def run_usecase_2():
     """Run the Content Investment Optimization dashboard."""
     st.title("🎬 Content Investment Optimization")
     st.markdown(
@@ -67,4 +67,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_usecase_2()

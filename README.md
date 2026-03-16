@@ -63,25 +63,25 @@ The project is built using Python 3.0+ and several open-source Python packages s
 
 ### Virtual Environment Setup
 
-This project uses a virtual environment to ensure all collaborators run the same Python version and dependencies. 
+This project uses a virtual environment to ensure all collaborators run the same Python version and dependencies. After cloning the repository, create a new environment and activate it. Further instructions for running our app locally are in the examples folder.
 
-#### 1. Clone the Repository
-git clone https://github.com/Netflix-User-Behavior.git
 
-cd ~/Netflix-User-Behavior
+#### 1. Create a new environment
 
-#### 2. Create a new environment
+```bash
 conda env create -f environment.yml
+```
+#### 2. Activate the environment 
 
-#### 3. Activate the environment 
+```bash
 conda activate netflix-env
-(your terminal should display (netflix-env))
-
-#### 4. Run the application **change this**
-streamlit dashboard_app.py
+```
 
 #### 5. Deactivate environment after finished running app
+
+```
 conda deactivate
+```
 
 ## Directory Summary
 

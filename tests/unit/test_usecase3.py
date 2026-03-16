@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import pytest  # pylint: disable=import-error
+import pytest
 
 import usecase3 as uc3
 

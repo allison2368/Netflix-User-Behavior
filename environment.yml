@@ -9,8 +9,6 @@ dependencies:
   - matplotlib
   - scikit-learn
   - xgboost 
-  - seaborn
-  - dash
   - pip:            
       - kagglehub==1.0.0
       - streamlit
@@ -20,4 +18,3 @@ dependencies:
       - imbalanced-learn
       - shap
       - pytest
-      - python-dotenv

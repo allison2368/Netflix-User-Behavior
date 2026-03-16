@@ -301,6 +301,45 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
         pickle.dump(config, f)
 
     print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
+    
+#add
+def load_artifacts(path='./model_outputs'):
+    """Load all saved model artifacts from the model_outputs folder."""
+    import pickle
+    import os
+
+    artifacts = {}
+
+    with open(os.path.join(path, 'rf_model.pkl'), 'rb') as f:
+        artifacts['model'] = pickle.load(f)
+
+    with open(os.path.join(path, 'scaler.pkl'), 'rb') as f:
+        artifacts['scaler'] = pickle.load(f)
+
+    with open(os.path.join(path, 'rfe_scaler.pkl'), 'rb') as f:
+        artifacts['rfe_scaler'] = pickle.load(f)
+
+    with open(os.path.join(path, 'kmeans.pkl'), 'rb') as f:
+        artifacts['kmeans'] = pickle.load(f)
+
+    with open(os.path.join(path, 'feature_names.pkl'), 'rb') as f:
+        artifacts['feature_names'] = pickle.load(f)
+
+    with open(os.path.join(path, 'config.pkl'), 'rb') as f:
+        artifacts['config'] = pickle.load(f)
+
+    with open(os.path.join(path, 'metrics.pkl'), 'rb') as f:
+        artifacts['metrics'] = pickle.load(f)
+
+    artifacts['feature_importance'] = pd.read_csv(
+        os.path.join(path, 'feature_importance.csv')
+    )
+
+    artifacts['segment_profile'] = pd.read_csv(
+        os.path.join(path, 'segment_profile.csv')
+    )
+
+    return artifacts
 
 
 # main function to run everything

@@ -49,6 +49,7 @@ To obtain a local copy of the repository, run the following command:
 
 ```bash
 git clone https://github.com/allison2368/Netflix-User-Behavior
+cd Netflix-User-Behavior
 ```
 
 ## 2. Local Environment Setup
@@ -62,9 +63,33 @@ conda env create -f environment.yml
 Once the environment is created, activate it using:
 
 ```bash
-conda activate tldhuber
+conda activate netflix-env
 ```
 
-## 3. Run app locally
+## 3. Configure Google Cloud
 
-Create the Conda environment netflix-env using the provided environment.yml file:
+Install Google Cloud SDK if you don't have it already
+
+Install via Homebrew.
+
+```bash
+brew install --cask google-cloud-sdk
+```
+
+After installing, restart your terminal then run:
+
+```bash
+gcloud init
+```
+
+Log in and configure credentials. This opens a browser, you log in, and ADC credentials are stored locally for the Python client libraries.
+
+```bash
+gcloud auth application-default login
+```
+
+## 4. Run app locally
+
+```bash
+streamlit run ***change***.py
+```

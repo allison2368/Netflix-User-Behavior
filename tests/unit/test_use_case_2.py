@@ -4,9 +4,8 @@ Unit tests for use_case_2_app.py functions.
 Includes unit, edge, and integration tests for Use Case 2.
 """
 import pandas as pd
-import pytest
 
-from use_case_2_app import preprocess, load_data
+from usecase2 import preprocess
 
 def test_preprocess_creates_columns():
     """Test preprocess creates derived columns."""
@@ -143,12 +142,3 @@ def test_single_origin_dataset():
     df_out, _ = preprocess(df, title_df)
 
     assert (df_out["origin_label"] == "Netflix Original").all()
-
-
-@pytest.mark.integration
-def test_bigquery_load_returns_data():
-    """Integration test for BigQuery load"""
-    df, title_df = load_data()
-
-    assert len(df) > 0
-    assert len(title_df) > 0

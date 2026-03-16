@@ -1,0 +1,167 @@
+-- gets the most recent watch date
+SELECT MAX(watch_date) AS snapshot_date
+FROM kaggle_cleaned.watch_history_cleaned;
+
+
+-- creates new table, adds column that calculates for each user snapshotdate - latest watch date
+CREATE OR REPLACE TABLE kaggle_cleaned.recency_features AS
+SELECT
+ u.user_id,
+ DATE_DIFF('2025-12-31', MAX(wh.watch_date), DAY) AS days_since_last_watch
+FROM kaggle_cleaned.users_cleaned u
+LEFT JOIN kaggle_cleaned.watch_history_cleaned wh
+ ON u.user_id = wh.user_id
+ AND wh.watch_date <= '2025-12-31'
+GROUP BY u.user_id;
+
+
+-- rolling window engagement for 7 and 30 day. also gets
+CREATE OR REPLACE TABLE kaggle_cleaned.window_features AS
+SELECT
+ user_id,
+ SUM(CASE
+       WHEN watch_date >= DATE_SUB('2025-12-31', INTERVAL 7 DAY)
+       THEN watch_duration_minutes
+     END) AS watch_last_7d,
+
+
+ SUM(CASE
+       WHEN watch_date >= DATE_SUB('2025-12-31', INTERVAL 30 DAY)
+       THEN watch_duration_minutes
+     END) AS watch_last_30d,
+
+
+ COUNT(CASE
+       WHEN watch_date >= DATE_SUB('2025-12-31', INTERVAL 30 DAY)
+       THEN session_id
+     END) AS sessions_last_30d
+FROM kaggle_cleaned.watch_history_cleaned
+WHERE watch_date <= '2025-12-31'
+GROUP BY user_id;
+
+
+-- compare 30 day trend vs 7 day trend. closer to 1 means steadily engaged
+CREATE OR REPLACE TABLE kaggle_cleaned.trend_features AS
+SELECT
+ user_id,
+ SAFE_DIVIDE(watch_last_7d, watch_last_30d) AS engagement_ratio_7v30
+FROM kaggle_cleaned.window_features;
+
+
+-- lifetime features, total length of watching
+CREATE OR REPLACE TABLE kaggle_cleaned.lifetime_features AS
+SELECT
+ user_id,
+ COUNT(*) AS total_sessions, -- counts number of sessions for each user
+ SUM(watch_duration_minutes) AS total_watch_minutes,
+ AVG(progress_percentage) AS avg_completion_rate
+FROM kaggle_cleaned.watch_history_cleaned
+WHERE watch_date <= '2025-12-31'
+GROUP BY user_id;
+
+
+-- see which users interacted with the recommendation system better
+CREATE OR REPLACE TABLE kaggle_cleaned.recommendation_features AS
+SELECT
+ user_id,
+ AVG(CAST(was_clicked AS INT64)) AS rec_click_rate,
+ AVG(recommendation_score) AS avg_rec_score_seen
+FROM kaggle_cleaned.recommendation_logs_cleaned
+WHERE recommendation_date <= '2025-12-31'
+GROUP BY user_id;
+
+
+-- look for signs of frustration when searching with how many searches, average search duration
+-- and how well the search was
+CREATE OR REPLACE TABLE kaggle_cleaned.search_features AS
+SELECT
+ user_id,
+ COUNT(*) AS total_searches,
+ AVG(search_duration_seconds) AS avg_search_time,
+ AVG(CAST(clicked AS INT64)) AS avg_search_click_rate
+FROM kaggle_cleaned.search_logs_cleaned
+WHERE search_date <= '2025-12-31'
+GROUP BY user_id;
+
+
+-- review sentiment feautures
+CREATE OR REPLACE TABLE kaggle_cleaned.review_features AS
+SELECT
+ user_id,
+ AVG(rating) AS avg_rating_given,
+ AVG(sentiment_score) AS avg_sentiment_score,
+ SUM(helpful_votes) AS total_helpful_votes
+FROM kaggle_cleaned.reviews_cleaned
+WHERE review_date <= '2025-12-31'
+GROUP BY user_id;
+
+
+-- look for loyal users
+CREATE OR REPLACE TABLE kaggle_cleaned.subscription_features AS
+SELECT
+ user_id,
+ DATE_DIFF('2025-12-31', subscription_start_date, DAY) AS tenure_days,
+ monthly_spend,
+ household_size,
+ subscription_plan
+FROM kaggle_cleaned.users_cleaned;
+
+
+-- combine to final table
+CREATE OR REPLACE TABLE kaggle_cleaned.churn_features AS
+SELECT
+ u.user_id,
+ u.age,
+ u.gender,
+ u.primary_device,
+ u.is_active,
+
+
+ r.days_since_last_watch,
+ w.watch_last_7d,
+ w.watch_last_30d,
+ t.engagement_ratio_7v30,
+
+
+ l.total_sessions,
+ l.total_watch_minutes,
+ l.avg_completion_rate,
+ SAFE_DIVIDE(w.watch_last_7d, (l.total_watch_minutes / 4.0) + 1e-9) AS watch_decline_ratio,
+
+
+ rec.rec_click_rate,
+ rec.avg_rec_score_seen,
+
+
+ s.total_searches,
+ s.avg_search_time,
+ s.avg_search_click_rate,
+
+
+ rev.avg_rating_given,
+ rev.avg_sentiment_score,
+
+
+ sub.tenure_days,
+ sub.monthly_spend,
+ sub.subscription_plan,
+
+
+
+
+FROM kaggle_cleaned.users_cleaned u
+LEFT JOIN kaggle_cleaned.recency_features r USING(user_id)
+LEFT JOIN kaggle_cleaned.window_features w USING(user_id)
+LEFT JOIN kaggle_cleaned.trend_features t USING(user_id)
+LEFT JOIN kaggle_cleaned.lifetime_features l USING(user_id)
+LEFT JOIN kaggle_cleaned.recommendation_features rec USING(user_id)
+LEFT JOIN kaggle_cleaned.search_features s USING(user_id)
+LEFT JOIN kaggle_cleaned.review_features rev USING(user_id)
+LEFT JOIN kaggle_cleaned.subscription_features sub USING(user_id);
+
+
+
+
+
+
+

@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest  # pylint: disable=import-error
 
-import usecase3 as uc3
+import usecase3.usecase3 as uc3
 
 # Unit Tests for Calculation Logic
 
 
-@patch("usecase3.load_final_pm_report")
-@patch("usecase3.load_null_search_analysis")
-@patch("usecase3.load_tenure_analysis")
+@patch("usecase3.usecase3.load_final_pm_report")
+@patch("usecase3.usecase3.load_null_search_analysis")
+@patch("usecase3.usecase3.load_tenure_analysis")
 def test_get_summary_metrics_logic(mock_tenure, mock_search, mock_bounce):
     """Test if summary metrics are calculated correctly with floating point precision."""
     # Prepare mock dataframes
@@ -89,7 +89,7 @@ def test_plot_pm_report_success():
 # Tests for Data Loading and Mocking
 
 
-@patch("usecase3.bigquery.Client")
+@patch("usecase3.usecase3.bigquery.Client")
 def test_load_failed_queries_mock(mock_client):
     """Check if BigQuery query results are correctly converted to a DataFrame."""
     mock_df = pd.DataFrame({"search_query": ["test_query"], "failure_count": [10]})
@@ -100,7 +100,7 @@ def test_load_failed_queries_mock(mock_client):
     assert result["search_query"][0] == "test_query"
 
 
-@patch("usecase3.bigquery.Client")
+@patch("usecase3.usecase3.bigquery.Client")
 def test_all_load_functions_coverage(mock_client):
     """Execute all data loading functions to ensure SQL queries and conversion logic are covered."""
     fake_df = pd.DataFrame({"dummy_col": [1, 2, 3]})

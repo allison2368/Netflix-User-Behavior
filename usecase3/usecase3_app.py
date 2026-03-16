@@ -13,9 +13,12 @@ def run_usecase_3():
     """
     st.set_page_config(layout="wide")  # wide theme
     st.title("What Causes Churn?")
-    st.markdown("**Puja's question:** What are the underperforming platform features causing user frustration?")
+    st.markdown(
+        "**Puja's question:** What are the underperforming platform features "
+        "causing user frustration?"
+    )
     st.divider()
-	
+
     # Initialize session state
     if "detail_view" not in st.session_state:
         st.session_state.detail_view = "Main"

@@ -1,0 +1,13 @@
+pandas
+numpy
+matplotlib
+streamlit
+scikit-learn
+google-cloud-bigquery
+google-cloud-storage
+imbalanced-learn
+shap
+pytest
+pylint
+python-dotenv
+seaborn

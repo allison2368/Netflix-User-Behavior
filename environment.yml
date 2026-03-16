@@ -39,5 +39,12 @@ dependencies:
       - google-cloud-bigquery
       - scikit-learn
       - kagglehub==1.0.0
-      - black
-      - pylint
+      - xgboost
+      - seaborn
+      - dash
+      - db-dtypes
+      - imbalanced-learn
+      - shap
+      - pytest
+      - python-dotenv
+

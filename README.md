@@ -133,14 +133,6 @@ Netflix-User-Behavior/
 
 Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
 
-To run the dashboard locally:
-```bash
-conda activate netflix-env
-```
-```bash
-streamlit run dashboard.py
-```
-
 ## Project Demo
 
 View the demo video for a walkthrough of the project. 

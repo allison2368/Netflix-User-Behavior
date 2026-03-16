@@ -79,7 +79,7 @@ conda env create -f environment.yml
 conda activate netflix-env
 ```
 
-#### 5. Deactivate environment after finished running app
+#### 3. Deactivate environment after finished running app
 
 ```
 conda deactivate

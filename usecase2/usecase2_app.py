@@ -13,14 +13,13 @@ from . import usecase2 as uc2  # Import logic module
 
 st.set_page_config(
     page_title="Content Investment · Sarah",
-    page_icon="🎬",
     layout="wide",
 )
 
 
 def run_usecase_2():
     """Run the Content Investment Optimization dashboard."""
-    st.title("🎬 Content Investment Optimization")
+    st.title("Content Investment Optimization")
     st.markdown(
         "**Sarah's question:** *Does investing in fewer high-rated Netflix Originals "
         "drive more retention than a higher volume of average-rated licensed content?*"
@@ -31,7 +30,7 @@ def run_usecase_2():
     df, title_df = uc2.preprocess(df_raw.copy(), title_df_raw.copy())
 
     # Sidebar filters
-    st.sidebar.header("🎛️ Filters")
+    st.sidebar.header("Filters")
 
     genres = sorted(df["genre_primary"].dropna().unique())
     sel_genres = st.sidebar.multiselect("Genre", genres, default=genres)

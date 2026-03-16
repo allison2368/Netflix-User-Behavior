@@ -5,6 +5,7 @@ Includes theme colors, landing page background, and custom button styles.
 
 import streamlit as st
 
+
 def apply_global_styles():
     """Applies global Netflix-themed CSS styles across the entire application."""
     st.markdown(
@@ -26,6 +27,13 @@ def apply_global_styles():
         /* Sidebar styling */
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #221f1f 0%, #141414 100%);
+            padding-top: 0.1rem !important;
+        }
+
+        /* Sidebar buttons: keep label horizontal (prevent vertical letter stacking) */
+        [data-testid="stSidebar"] .stButton > button {
+            white-space: nowrap !important;
+            min-width: 4rem;
         }
 
         /* Sidebar text visibility */
@@ -42,6 +50,14 @@ def apply_global_styles():
         /* Radio buttons */
         [data-testid="stSidebar"] [data-baseweb="radio"] {
             color: white !important;
+        }
+
+        /* Sidebar radio options: more vertical space between choices */
+        [data-testid="stSidebar"] .stRadio > div {
+            margin-bottom: 1rem !important;
+        }
+        [data-testid="stSidebar"] .stRadio [role="radio"] {
+            margin-bottom: 0.75rem !important;
         }
 
         /* Headers */
@@ -71,6 +87,38 @@ def apply_global_styles():
         .stButton>button:hover {
             background-color: #B20710;
             transform: scale(1.05);
+        }
+
+        /* Landing profile buttons: override size/style when #landing-marker exists (same block = wins over rule above) */
+        #landing-marker ~ * .stButton > button {
+            width: 420px !important;
+            height: 420px !important;
+            min-width: 38vmin !important;
+            min-height: 38vmin !important;
+            max-width: 420px !important;
+            max-height: 420px !important;
+            padding: 0 !important;
+            background: rgba(30, 20, 40, 0.85) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 3px solid rgba(255, 215, 0, 0.2) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            margin: 0 auto 0.5rem !important;
+            font-size: 6rem !important;
+            line-height: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #landing-marker ~ * .stButton > button:hover {
+            border-color: rgba(255, 215, 0, 0.6) !important;
+            background: rgba(50, 30, 60, 0.95) !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3) !important;
+        }
+        #landing-marker ~ * .stButton {
+            display: flex !important;
+            justify-content: center !important;
         }
 
         /* Dataframes */
@@ -105,63 +153,17 @@ def apply_global_styles():
 
 
 def apply_landing_styles():
-    """Applies Bridgerton-inspired elegant CSS for the 'Who's Watching?' landing page."""
+    """Landing page: black background, hide sidebar, tighten column spacing. Button size is set in apply_global_styles()."""
     st.markdown(
         """
     <style>
-        /* Hide sidebar */
-        [data-testid="stSidebar"] {
-            display: none;
-        }
+        [data-testid="stSidebar"] { display: none; }
+        .stApp { background: #000000 !important; }
+        .main { background: transparent !important; }
 
-        /* Bridgerton-inspired elegant background */
-        .stApp {
-            background:
-                repeating-linear-gradient(45deg, transparent, transparent 35px, 
-                rgba(139, 69, 19, 0.03) 35px, rgba(139, 69, 19, 0.03) 70px),
-                repeating-linear-gradient(-45deg, transparent, transparent 35px, 
-                rgba(75, 0, 130, 0.03) 35px, rgba(75, 0, 130, 0.03) 70px),
-                radial-gradient(circle at 30% 20%, rgba(75, 0, 130, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(139, 69, 19, 0.2) 0%, transparent 50%),
-                linear-gradient(135deg, #0f0c1d 0%, #1a0e2e 50%, #2d1b3d 100%) !important;
-            background-size: cover !important;
-            background-attachment: fixed !important;
-        }
-
-        .stApp::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, 
-            rgba(255, 215, 0, 0.05) 0%, transparent 70%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .main {
-            background: transparent !important;
-            position: relative;
-            z-index: 1;
-        }
-
-        .stButton > button {
-            background: rgba(30, 20, 40, 0.85) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 3px solid rgba(255, 215, 0, 0.2) !important;
-            border-radius: 8px !important;
-            min-height: 300px !important;
-            transition: all 0.3s !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-        }
-
-        .stButton > button:hover {
-            border-color: rgba(255, 215, 0, 0.6) !important;
-            background: rgba(50, 30, 60, 0.95) !important;
-            transform: scale(1.05) !important;
-            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3) !important;
+        #landing-marker ~ * [data-testid="column"] {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
         }
     </style>
     """,
@@ -170,7 +172,7 @@ def apply_landing_styles():
 
 
 def apply_play_button_styles():
-    """Prevents profile play icon buttons from distorting - enforces fixed circular dimensions."""
+    """Legacy: profile selection is now the square button; kept for any other button styling."""
     st.markdown(
         """
     <style>

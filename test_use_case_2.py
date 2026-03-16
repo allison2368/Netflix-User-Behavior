@@ -3,12 +3,15 @@ Unit tests for use_case_2_app.py functions.
 
 Includes unit, edge, and integration tests for Use Case 2.
 """
+# pylint: disable=duplicate-code
 import pandas as pd
-import pytest
+import pytest  # pylint: disable=import-error
 
 from use_case_2_app import preprocess, load_data
 
+
 def test_preprocess_creates_columns():
+    """Test that preprocess adds imdb_bucket and origin_label columns."""
     df = pd.DataFrame({
         "imdb_rating": [7.5, 6.2],
         "is_netflix_original": [True, False]
@@ -16,13 +19,14 @@ def test_preprocess_creates_columns():
 
     title_df = df.copy()
 
-    df_out, title_out = preprocess(df, title_df)
+    df_out, _ = preprocess(df, title_df)
 
     assert "imdb_bucket" in df_out.columns
     assert "origin_label" in df_out.columns
 
 
 def test_origin_label_mapping():
+    """Test that origin labels map correctly (Netflix Original vs Licensed)."""
     df = pd.DataFrame({
         "imdb_rating": [7.0, 7.0],
         "is_netflix_original": [True, False]
@@ -39,6 +43,7 @@ def test_origin_label_mapping():
 
 
 def test_imdb_bucket_assignment():
+    """Test IMDb bucket assignment for rating ranges."""
     df = pd.DataFrame({
         "imdb_rating": [5.5, 7.4, 8.8],
         "is_netflix_original": [True, True, False]
@@ -54,6 +59,7 @@ def test_imdb_bucket_assignment():
 
 
 def test_sidebar_filters_genre():
+    """Test sidebar genre filtering logic."""
     df = pd.DataFrame({
         "genre_primary": ["Drama", "Comedy"],
         "subscription_plan": ["Basic", "Basic"],
@@ -65,6 +71,7 @@ def test_sidebar_filters_genre():
 
 
 def test_origin_filter_logic():
+    """Test origin filter behavior."""
     df = pd.DataFrame({
         "origin_label": ["Netflix Original", "Licensed"]
     })
@@ -75,6 +82,7 @@ def test_origin_filter_logic():
 
 
 def test_quality_origin_aggregation():
+    """Test quality and origin aggregation metrics."""
     df = pd.DataFrame({
         "origin_label": ["Netflix Original", "Licensed", "Licensed"],
         "imdb_bucket": ["7-8", "7-8", "7-8"],
@@ -101,6 +109,7 @@ def test_quality_origin_aggregation():
 
 
 def test_preprocess_handles_missing_ratings():
+    """Test preprocess handles missing ratings."""
     df = pd.DataFrame({
         "imdb_rating": [None, 7.2],
         "is_netflix_original": [True, False]
@@ -114,6 +123,7 @@ def test_preprocess_handles_missing_ratings():
 
 
 def test_preprocess_empty_dataframe():
+    """Test preprocess with empty dataframe."""
     df = pd.DataFrame(columns=["imdb_rating", "is_netflix_original"])
     title_df = df.copy()
 
@@ -124,6 +134,7 @@ def test_preprocess_empty_dataframe():
 
 
 def test_single_origin_dataset():
+    """Test dataset containing only one origin."""
     df = pd.DataFrame({
         "imdb_rating": [7.5, 8.0],
         "is_netflix_original": [True, True]
@@ -136,12 +147,10 @@ def test_single_origin_dataset():
     assert (df_out["origin_label"] == "Netflix Original").all()
 
 
-# Integration test for BigQuery
 @pytest.mark.integration
 def test_bigquery_load_returns_data():
+    """Integration test for BigQuery load."""
     df, title_df = load_data()
 
     assert len(df) > 0
     assert len(title_df) > 0
-
-

@@ -4,7 +4,7 @@ Unit tests for use_case_2_app.py functions.
 Includes unit, edge, and integration tests for Use Case 2.
 """
 import pandas as pd
-import pytest
+import pytest  # pylint: disable=import-error
 
 from use_case_2_app import preprocess, load_data
 

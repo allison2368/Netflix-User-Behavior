@@ -9,3 +9,4 @@ imbalanced-learn
 shap
 pytest
 pylint
+python-dotenv

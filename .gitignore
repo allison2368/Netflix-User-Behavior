@@ -1,0 +1,6 @@
+.env
+*.json
+model_outputs/
+__pycache__/
+.DS_Store
+

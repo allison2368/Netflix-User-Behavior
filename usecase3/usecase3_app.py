@@ -4,8 +4,7 @@ Streamlit application for the Netflix User Behavior dashboard.
 
 import streamlit as st
 
-import usecase3 as uc3
-
+from usecase3 import usecase3 as uc3
 
 def run_usecase_3():
     """

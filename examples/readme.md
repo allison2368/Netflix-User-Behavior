@@ -90,9 +90,10 @@ gcloud auth application-default login
 
 ## 4. Run app locally
 
-You need to configure the project id before running the app
+You need to configure the project id before running the app. You need to have an .env file including project ID to access data.
 ```bash
-export PROJECT_ID=‘netflix-user-behavior'
+PROJECT_ID=‘your-project-id-here'
+
 ```
 ```bash
 streamlit run dashboard.py

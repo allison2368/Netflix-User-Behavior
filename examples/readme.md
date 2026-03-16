@@ -92,7 +92,7 @@ gcloud auth application-default login
 
 You need to configure the project id before running the app
 ```bash
-export PROJECT_ID=‘netflix-user-behavior'
+export PROJECT_ID='netflix-user-behavior'
 ```
 ```bash
 streamlit run dashboard.py

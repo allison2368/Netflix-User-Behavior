@@ -1,6 +1,7 @@
 import streamlit as st
 
 def apply_global_styles():
+    """Applies global Netflix-themed CSS styles across the entire application."""
     st.markdown("""
     <style>
         /* Netflix theme colors */
@@ -95,7 +96,7 @@ def apply_global_styles():
     """, unsafe_allow_html=True)
 
 def apply_landing_styles():
-    """Who's Watching? 페이지 전용 브리저튼 스타일 CSS"""
+    """Applies Bridgerton-inspired elegant CSS for the 'Who's Watching?' landing page."""
     st.markdown("""
     <style>
         /* Hide sidebar */
@@ -153,10 +154,10 @@ def apply_landing_styles():
     """, unsafe_allow_html=True)
 
 def apply_play_button_styles():
-    """프로필 하단 재생 아이콘 버튼 찌그러짐 방지 - 절대 고정형"""
+    """Prevents profile play icon buttons from distorting - enforces fixed circular dimensions."""
     st.markdown("""
     <style>
-        /* 버튼을 감싸는 컨테이너 자체가 늘어나지 않도록 제어 */
+        /* Prevent button container from expanding */
         div.stButton {
             display: flex;
             justify-content: center;
@@ -164,7 +165,7 @@ def apply_play_button_styles():
             margin-bottom: 2rem;
         }
 
-        /* 버튼 본체: 모든 방향에서 크기 고정 */
+        /* Button Body: Fixed dimensions from all directions */
         div.stButton > button {
             width: 70px !important;
             height: 70px !important;
@@ -173,14 +174,14 @@ def apply_play_button_styles():
             min-height: 70px !important;
             max-height: 70px !important;
             
-            border-radius: 50% !important; /* 완벽한 원 */
+            border-radius: 50% !important; /* Perfect circle */
             padding: 0 !important;
             margin: 0 auto !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             
-            /* 디자인 */
+            /* Design aesthetics */
             background: rgba(229, 9, 20, 0.95) !important;
             border: 3px solid rgba(255, 215, 0, 0.6) !important;
             font-size: 2rem !important;
@@ -189,14 +190,14 @@ def apply_play_button_styles():
             transition: all 0.3s ease !important;
         }
 
-        /* 호버 효과 */
+        /* Hover effect */
         div.stButton > button:hover {
             background: rgba(255, 215, 0, 0.95) !important;
             border-color: rgba(255, 215, 0, 1) !important;
             transform: scale(1.1) !important;
         }
 
-        /* Firefox 등에서 텍스트가 쏠리는 현상 방지 */
+        /* Prevent text misalignment in browsers like Firefox */
         div.stButton > button p {
             margin: 0 !important;
             padding: 0 !important;

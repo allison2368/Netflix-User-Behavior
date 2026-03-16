@@ -2,10 +2,10 @@ import streamlit as st
 import styles
 
 def show_landing_page():
-    # 원본 스타일 적용
+    # Apply landing page styles
     styles.apply_landing_styles()
 
-    # Large Netflix logo
+    # Large Netflix logo section
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -21,7 +21,7 @@ def show_landing_page():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Title
+    # Title section
     st.markdown("""
     <h1 style="text-align: center; color: white; font-size: 3.5rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 3rem;
                text-shadow: 0 0 20px rgba(229, 9, 20, 0.5), 0 0 40px rgba(229, 9, 20, 0.3), 2px 2px 8px rgba(0, 0, 0, 0.9);">
@@ -29,6 +29,7 @@ def show_landing_page():
     </h1>
     """, unsafe_allow_html=True)
 
+    # Profile selection grid
     col1, col2, col3, col4 = st.columns(4)
     profiles = [
         {"key": "marcus", "emoji": "🎯", "name": "Marcus", "role": "Marketing Manager", "col": col1, "color": "linear-gradient(135deg, #E50914 0%, #B20710 100%)"},
@@ -39,6 +40,7 @@ def show_landing_page():
 
     for profile in profiles:
         with profile["col"]:
+            # Profile card UI
             st.markdown(f"""
             <div style="text-align: center; padding: 1rem;">
                 <div style="width: 140px; height: 140px; margin: 0 auto 1rem; border-radius: 8px;
@@ -54,12 +56,13 @@ def show_landing_page():
             </div>
             """, unsafe_allow_html=True)
 
+            # Play button for user selection
             col_a, col_b, col_c = st.columns([1.5, 1, 1.5])
             with col_b:
                 if st.button("▶️", key=profile['key']):
                     st.session_state.selected_user = profile['key']
                     st.rerun()
 
-    # 재생 버튼 스타일은 마지막에 덮어씌워야 적용됨
+    # Apply play button specific styling at the end to ensure override
     styles.apply_play_button_styles()
     st.markdown("<br><br>", unsafe_allow_html=True)

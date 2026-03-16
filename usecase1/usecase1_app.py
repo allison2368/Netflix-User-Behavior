@@ -1,53 +1,80 @@
 import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
-import usecase1 as uc1
+from datetime import datetime
+from . import usecase1 as uc1 # Import logic module
 
-def run_usecase_1(artifacts):
-    st.header("🎯 Targeted Marketing Campaigns")
+def run_usecase_1():
+    """Main function for the Use Case 1 Dashboard UI."""
+    st.title("🎬 NETFLIX CHURN PREDICTION")
+    st.markdown("### Use Case 1: High-Risk Churners Export")
     
-    # 1. 데이터 로드 (Real BigQuery Data)
-    with st.spinner("Fetching real-time churn data..."):
-        raw_data = uc1.load_high_risk_data()
+    # Load data and artifacts
+    artifacts = uc1.load_artifacts()
+    raw_data = uc1.load_users_from_bq()
+    user_data = uc1.predict_churn_logic(raw_data, artifacts)
 
-    # 2. STEP 1: 필터 설정 (UI)
-    st.subheader("STEP 1: Set Risk Criteria")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        threshold = st.slider("Churn Threshold (%)", 50, 100, 85)
-    with c2:
-        segments = st.multiselect("Segments", options=raw_data['segment'].unique(), default=raw_data['segment'].unique())
-    with c3:
-        revenue = st.number_input("Min Revenue ($)", 0.0, 100.0, 0.0)
-
-    # 3. 데이터 가공
-    filtered_df = uc1.filter_users(raw_data, threshold, segments, revenue)
-    metrics = uc1.calculate_impact_metrics(filtered_df)
-
-    # 4. STEP 2: Metrics 표시
-    st.divider()
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("🚨 High-Risk Users", f"{metrics['count']:,}")
-    m2.metric("💵 MRR at Risk", f"${metrics['monthly_revenue_at_risk']:,.2f}")
-    m3.metric("📉 Avg Churn Prob", f"{metrics['avg_churn_prob']:.1%}")
-    m4.metric("💎 LTV at Risk", f"${metrics['ltv_at_risk']:,.0f}")
-    m5.metric("⚠️ Expected Loss", f"${metrics['expected_loss']:,.2f}")
-
-    # 5. STEP 3: 시각화 (Plotly)
-    st.divider()
-    st.subheader("STEP 3: Segment Breakdown")
-    # (여기에는 기존의 Plotly 코드들을 filtered_df를 사용해 배치)
-    # 예: render_plotly_charts(filtered_df) 호출
-
-    # 6. STEP 4: Export (CSV)
-    st.divider()
-    st.subheader("STEP 4: Export Segment")
-    col_preview, col_export = st.columns([2, 1])
+    # Set Risk Criteria (Filters)
+    st.header("STEP 1: Set Risk Criteria")
+    col1, col2, col3 = st.columns(3)
     
-    with col_preview:
-        st.dataframe(filtered_df.head(10))
+    with col1:
+        threshold = st.slider("🎯 Churn Threshold (%)", 50, 100, 85)
+    with col2:
+        num_seg = artifacts['config']['N_CLUSTERS']
+        segs = st.multiselect(
+            "📊 Target Segments", 
+            [f"Segment {i}" for i in range(num_seg)], 
+            [f"Segment {i}" for i in range(num_seg)]
+        )
+    with col3:
+        plans = st.multiselect(
+            "💳 Subscription Plans", 
+            list(uc1.SUBSCRIPTION_PLANS.keys()), 
+            list(uc1.SUBSCRIPTION_PLANS.keys())
+        )
+
+    # Apply Filtering Logic
+    filtered_df = user_data[user_data['churn_probability_pct'] >= threshold].copy()
+    seg_ids = [int(s.split()[-1]) for s in segs]
+    filtered_df = filtered_df[filtered_df['segment'].isin(seg_ids)]
+    
+    if 'subscription_plan' in filtered_df.columns:
+        filtered_df = filtered_df[filtered_df['subscription_plan'].isin(plans)]
+
+    # Metrics Overview
+    st.markdown("---")
+    st.header("STEP 2: High-Risk Segment Overview")
+    m1, m2, m3 = st.columns(3)
+    m1.metric("🚨 High-Risk Users", f"{len(filtered_df):,}")
+    
+    avg_prob = filtered_df['churn_probability_pct'].mean() if len(filtered_df) > 0 else 0
+    m2.metric("📊 Avg Probability", f"{avg_prob:.1f}%")
+    
+    # Calculate revenue at risk (Optional based on plans)
+    total_rev = len(filtered_df) * 15.0  # Default avg if plan not found
+    m3.metric("💰 Est. Monthly Revenue at Risk", f"${total_rev:,.0f}")
+    
+    # Visualizations (Calling functions from usecase1.py)
+    col_left, col_right = st.columns(2)
+    with col_left:
+        st.plotly_chart(uc1.get_churn_dist_plot(filtered_df), use_container_width=True)
+    with col_right:
+        if len(filtered_df) > 0:
+            st.plotly_chart(uc1.get_segment_pie_plot(filtered_df), use_container_width=True)
+
+    # Export Section
+    st.markdown("---")
+    st.header("STEP 3: Export Target Segment")
+    if len(filtered_df) > 0:
+        st.subheader("📋 Preview (Top 10)")
+        st.dataframe(filtered_df.head(10), use_container_width=True)
         
-    with col_export:
-        csv = filtered_df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download CSV", data=csv, file_name="campaign_list.csv", mime="text/csv")
+        csv = filtered_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download High-Risk User List (CSV)", 
+            data=csv, 
+            file_name=f"high_risk_churners_{datetime.now().strftime('%Y%m%d')}.csv", 
+            mime="text/csv"
+        )
+    else:
+        st.warning("⚠️ No users match the current criteria. Please adjust the filters.")

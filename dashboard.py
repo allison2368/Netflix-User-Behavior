@@ -3,15 +3,9 @@ import streamlit as st
 import styles
 import landing
 from churn_model import churn_model_updated as cm
+from usecase1.usecase1_app import run_usecase_1
 
-try:
-    from usecase3.usecase3_app import run_usecase_3
-except ImportError:
-    # 에러 방지용 임시 함수
-    def run_usecase_3():
-        st.error("Usecase3 모듈을 불러올 수 없습니다. 폴더 구조와 __init__.py를 확인하세요.")
-
-# 1. 초기 설정
+# Initial Configuration
 st.set_page_config(
     page_title="Netflix Churn Prediction Dashboard",
     page_icon="🎬",
@@ -19,35 +13,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. 전역 스타일 적용 (styles.py에서 호출)
+# Apply Global Styles (Called from styles.py)
 styles.apply_global_styles()
 
-# 3. 모델 아티팩트 로딩 (기존 로직 그대로)
+# Load Model Artifacts (Caching for performance)
 @st.cache_resource
 def load_model_artifacts():
     try:
-        # USE_GCS 설정은 원본 파일 상단에서 하던 방식 유지 가능
+        # Configuration for USE_GCS can be maintained at the top of the source file
         return cm.load_artifacts('./model_outputs')
     except Exception:
         st.error("Model artifacts not found.")
         st.stop()
 
-# 4. Placeholder 페이지 정의
+# Placeholder Page Definition
 def show_placeholder(title):
     st.header(f"🚧 {title}")
-    st.info("이 섹션은 현재 개발 중입니다. 곧 공개될 예정입니다!")
+    st.info("This section is currently under development. Coming soon!")
 
-# 5. 메인 실행부
+# Main Execution Block
 def main():
+    # Initialize session state for user selection
     if 'selected_user' not in st.session_state:
         st.session_state.selected_user = None
 
+    # Routing between Landing Page and Dashboard
     if st.session_state.selected_user is None:
         landing.show_landing_page()
     else:
         artifacts = load_model_artifacts()
 
-        # 상단 헤더 (원본 코드 그대로)
+        # Top Header Section
         col1, col2, col3 = st.columns([1, 3, 1])
         with col1:
             if st.button("⬅ Switch User"):
@@ -60,7 +56,7 @@ def main():
             st.markdown("<div style='text-align: right;'><h2 style='color:#E50914; font-family:Bebas Neue;'>NETFLIX</h2></div>", unsafe_allow_html=True)
         st.markdown("---")
 
-        # 사이드바 설정
+        # Sidebar Configuration
         user_info = {
             "marcus": {"emoji": "🎯", "name": "Marcus", "role": "Marketing Manager"},
             "sarah": {"emoji": "📺", "name": "Sarah", "role": "Content Executive"},
@@ -73,8 +69,7 @@ def main():
         st.sidebar.success(f"{current_user['emoji']} **{current_user['name']}**\n\n*{current_user['role']}*")
         st.sidebar.markdown("---")
 
-
-        # 페이지 목록 정의
+        # Define Page Navigation Options
         pages = [
             "🎯 Marketing Campaign (Marcus)", 
             "📺 Content Investment (Sarah)", 
@@ -82,7 +77,7 @@ def main():
             "📊 Model Performance"
         ]
 
-        # 선택된 유저에 따른 기본 인덱스 설정
+        # Set default index based on the selected user from landing page
         default_index = 0
         if st.session_state.selected_user == "marcus":
             default_index = 0
@@ -93,24 +88,24 @@ def main():
         elif st.session_state.selected_user == "admin":
             default_index = 3
 
-        # 라디오 버튼에 index 적용
+        # Render Sidebar Radio Selection with auto-indexing
         page = st.sidebar.radio(
             "Select Dashboard View",
             pages,
-            index=default_index  # 이 부분이 핵심!  
+            index=default_index  
         )
 
-        # 라우팅
+        # Main Content Routing
         if page == "🎯 Marketing Campaign (Marcus)":
-            show_placeholder("Marketing Campaign Analysis")
+            run_usecase_1()
         elif page == "📺 Content Investment (Sarah)":
             show_placeholder("Content Investment Strategy")
         elif page == "💡 Feature Engagement (Puja)":
-            # ✅ 요구사항대로 usecase3.usecase3_app에서 run_usecase_3 호출
+            # Call run_usecase_3 from usecase3.usecase3_app as requested
             from usecase3.usecase3_app import run_usecase_3
             run_usecase_3()
         elif page == "📊 Model Performance":
-            # 원본 코드에 있던 show_model_performance 로직을 그대로 여기에 두거나 별도 함수로 호출
+            # Display model metrics logic
             st.header("📊 Model Performance Metrics")
             st.write(artifacts.get('metrics', 'No metrics available'))
 

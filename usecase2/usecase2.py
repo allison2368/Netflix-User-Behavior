@@ -84,7 +84,7 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         GROUP BY 1,2,3,4,5,6,7
     """
 
-    df       = client.query(session_sql).result().to_dataframe()
+    df = client.query(session_sql).result().to_dataframe()
     title_df = client.query(title_sql).result().to_dataframe()
     return df, title_df
 
@@ -99,13 +99,16 @@ def preprocess(df: pd.DataFrame, title_df: pd.DataFrame):
     Returns:
         tuple[pd.DataFrame, pd.DataFrame]: Updated dataframes
     """
-    imdb_bins   = [0, 5, 6, 7, 8, 9, 10]
+    imdb_bins = [0, 5, 6, 7, 8, 9, 10]
     imdb_labels = ["0-5", "5-6", "6-7", "7-8", "8-9", "9-10"]
 
     for frame in [df, title_df]:
         frame["imdb_bucket"] = pd.cut(
-            frame["imdb_rating"], bins=imdb_bins,
-            labels=imdb_labels, right=True, include_lowest=True,
+            frame["imdb_rating"],
+            bins=imdb_bins,
+            labels=imdb_labels,
+            right=True,
+            include_lowest=True,
         )
         frame["origin_label"] = np.where(
             frame["is_netflix_original"], "Netflix Original", "Licensed"
@@ -123,18 +126,18 @@ def render_kpis(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
     """
     st.subheader("📊 Portfolio Overview")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    n_orig     = title_df["is_netflix_original"].sum()
+    n_orig = title_df["is_netflix_original"].sum()
     n_licensed = (~title_df["is_netflix_original"]).sum()
-    c1.metric("Total titles",      f"{len(title_df):,}")
+    c1.metric("Total titles", f"{len(title_df):,}")
     c2.metric("Netflix Originals", f"{n_orig:,}")
-    c3.metric("Licensed titles",   f"{n_licensed:,}")
+    c3.metric("Licensed titles", f"{n_licensed:,}")
     c4.metric(
         "Avg IMDb (Originals)",
-        f"{title_df[title_df.is_netflix_original]['imdb_rating'].mean():.2f}"
+        f"{title_df[title_df.is_netflix_original]['imdb_rating'].mean():.2f}",
     )
     c5.metric(
         "Avg IMDb (Licensed)",
-        f"{title_df[~title_df.is_netflix_original]['imdb_rating'].mean():.2f}"
+        f"{title_df[~title_df.is_netflix_original]['imdb_rating'].mean():.2f}",
     )
     c6.metric("Active subscriber %", f"{df['is_active'].mean() * 100:.1f}%")
 
@@ -147,15 +150,17 @@ def render_quality_origin(df: pd.DataFrame) -> None:
         df (pd.DataFrame): Session-level dataframe
     """
     st.subheader("1️⃣ Quality Tier × Origin Type → Retention")
-    st.caption("Does high-rated content drive more engagement, "
-               "and does origin type amplify that effect?")
+    st.caption(
+        "Does high-rated content drive more engagement, "
+        "and does origin type amplify that effect?"
+    )
 
     agg = (
         df.groupby(["origin_label", "imdb_bucket"], observed=True)
         .agg(
-            avg_completion=("progress_percentage",    "mean"),
-            avg_duration  =("watch_duration_minutes", "mean"),
-            sessions      =("session_id",             "count"),
+            avg_completion=("progress_percentage", "mean"),
+            avg_duration=("watch_duration_minutes", "mean"),
+            sessions=("session_id", "count"),
         )
         .reset_index()
     )
@@ -166,13 +171,20 @@ def render_quality_origin(df: pd.DataFrame) -> None:
         fig, ax = plt.subplots(figsize=(6, 4))
         for origin, color in ORIGIN_COLORS.items():
             sub = agg[agg["origin_label"] == origin]
-            ax.plot(sub["imdb_bucket"].astype(str), sub["avg_completion"],
-                    marker="o", linewidth=2.5, markersize=7,
-                    color=color, label=origin)
+            ax.plot(
+                sub["imdb_bucket"].astype(str),
+                sub["avg_completion"],
+                marker="o",
+                linewidth=2.5,
+                markersize=7,
+                color=color,
+                label=origin,
+            )
         ax.set_xlabel("IMDb Rating Bucket")
         ax.set_ylabel("Avg Completion Rate (%)")
-        ax.set_title("Completion Rate by Quality Tier & Origin",
-                     fontsize=11, fontweight="bold")
+        ax.set_title(
+            "Completion Rate by Quality Tier & Origin", fontsize=11, fontweight="bold"
+        )
         ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f%%"))
         ax.legend(fontsize=9)
         ax.grid(alpha=0.25)
@@ -183,28 +195,45 @@ def render_quality_origin(df: pd.DataFrame) -> None:
         fig, ax = plt.subplots(figsize=(6, 4))
         for origin, color in ORIGIN_COLORS.items():
             sub = agg[agg["origin_label"] == origin]
-            ax.plot(sub["imdb_bucket"].astype(str), sub["avg_duration"],
-                    marker="o", linewidth=2.5, markersize=7,
-                    color=color, label=origin)
+            ax.plot(
+                sub["imdb_bucket"].astype(str),
+                sub["avg_duration"],
+                marker="o",
+                linewidth=2.5,
+                markersize=7,
+                color=color,
+                label=origin,
+            )
         ax.set_xlabel("IMDb Rating Bucket")
         ax.set_ylabel("Avg Watch Duration (min)")
-        ax.set_title("Watch Duration by Quality Tier & Origin",
-                     fontsize=11, fontweight="bold")
+        ax.set_title(
+            "Watch Duration by Quality Tier & Origin", fontsize=11, fontweight="bold"
+        )
         ax.legend(fontsize=9)
         ax.grid(alpha=0.25)
         st.pyplot(fig)
         plt.close(fig)
 
     pivot = agg.pivot_table(
-        index="imdb_bucket", columns="origin_label",
-        values="avg_completion", aggfunc="mean",
+        index="imdb_bucket",
+        columns="origin_label",
+        values="avg_completion",
+        aggfunc="mean",
     ).round(1)
 
     fig, ax = plt.subplots(figsize=(5, 4))
-    sns.heatmap(pivot, ax=ax, annot=True, fmt=".1f", cmap="YlGnBu",
-                linewidths=0.4, cbar_kws={"label": "Avg Completion %"})
-    ax.set_title("Completion % Heatmap — Quality × Origin",
-                 fontsize=11, fontweight="bold")
+    sns.heatmap(
+        pivot,
+        ax=ax,
+        annot=True,
+        fmt=".1f",
+        cmap="YlGnBu",
+        linewidths=0.4,
+        cbar_kws={"label": "Avg Completion %"},
+    )
+    ax.set_title(
+        "Completion % Heatmap — Quality × Origin", fontsize=11, fontweight="bold"
+    )
     ax.set_xlabel("")
     ax.set_ylabel("IMDb Bucket")
     ax.tick_params(axis="x", rotation=0)
@@ -229,11 +258,11 @@ def _render_kpi_cards(health: pd.DataFrame) -> None:
             unsafe_allow_html=True,
         )
         cols = st.columns(6)
-        cols[0].metric("Active rate",    f"{row['active_rate']*100:.1f}%")
-        cols[1].metric("Avg spend/mo",   f"${row['avg_monthly_spend']:.2f}")
-        cols[2].metric("Avg tenure",     f"{row['avg_tenure_days']:.0f}d")
-        cols[3].metric("Watch decline",  f"{row['avg_watch_decline']:.2f}")
-        cols[4].metric("7v30 ratio",     f"{row['avg_engagement_ratio']:.2f}")
+        cols[0].metric("Active rate", f"{row['active_rate']*100:.1f}%")
+        cols[1].metric("Avg spend/mo", f"${row['avg_monthly_spend']:.2f}")
+        cols[2].metric("Avg tenure", f"{row['avg_tenure_days']:.0f}d")
+        cols[3].metric("Watch decline", f"{row['avg_watch_decline']:.2f}")
+        cols[4].metric("7v30 ratio", f"{row['avg_engagement_ratio']:.2f}")
         cols[5].metric("Watch last 30d", f"{row['avg_watch_last30']:.0f} min")
 
 
@@ -244,10 +273,10 @@ def _plot_health_bar_chart(health: pd.DataFrame) -> None:
         health (pd.DataFrame): Aggregated health metrics by origin label.
     """
     metrics = ["active_rate", "avg_engagement_ratio", "avg_watch_decline"]
-    labels  = ["Active Rate", "Engagement 7v30", "Watch Decline Ratio"]
+    labels = ["Active Rate", "Engagement 7v30", "Watch Decline Ratio"]
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    x     = np.arange(len(metrics))
+    x = np.arange(len(metrics))
     width = 0.35
 
     for i, (origin, color) in enumerate(ORIGIN_COLORS.items()):
@@ -255,11 +284,11 @@ def _plot_health_bar_chart(health: pd.DataFrame) -> None:
         if subset.empty:
             continue
         heights = [subset[m].values[0] for m in metrics]
-        ax.bar(x + i * width, heights, width=width,
-               color=color, alpha=0.85, label=origin)
+        ax.bar(
+            x + i * width, heights, width=width, color=color, alpha=0.85, label=origin
+        )
         for xi, h in zip(x + i * width, heights):
-            ax.text(xi, h + 0.01, f"{h:.2f}",
-                    ha="center", va="bottom", fontsize=9)
+            ax.text(xi, h + 0.01, f"{h:.2f}", ha="center", va="bottom", fontsize=9)
 
     ax.set_xticks(x + width / 2)
     ax.set_xticklabels(labels)
@@ -289,13 +318,15 @@ def _plot_active_rate_by_bucket(df: pd.DataFrame) -> None:
         ax.plot(
             sub["imdb_bucket"].astype(str),
             sub["active_rate"] * 100,
-            marker="o", linewidth=2.5, markersize=7,
-            color=color, label=origin,
+            marker="o",
+            linewidth=2.5,
+            markersize=7,
+            color=color,
+            label=origin,
         )
     ax.set_xlabel("IMDb Rating Bucket")
     ax.set_ylabel("Active Subscriber Rate (%)")
-    ax.set_title("Active Rate by Quality Tier & Origin",
-                 fontsize=11, fontweight="bold")
+    ax.set_title("Active Rate by Quality Tier & Origin", fontsize=11, fontweight="bold")
     ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f%%"))
     ax.legend(fontsize=9)
     ax.grid(alpha=0.25)
@@ -320,13 +351,13 @@ def render_subscriber_health(df: pd.DataFrame) -> None:
     health = (
         high_rated.groupby("origin_label")
         .agg(
-            users               =("user_id",              "nunique"),
-            active_rate         =("is_active",            "mean"),
-            avg_monthly_spend   =("monthly_spend",        "mean"),
-            avg_tenure_days     =("tenure_days",          "mean"),
-            avg_watch_decline   =("watch_decline_ratio",  "mean"),
-            avg_engagement_ratio=("engagement_ratio_7v30","mean"),
-            avg_watch_last30    =("watch_last_30d",       "mean"),
+            users=("user_id", "nunique"),
+            active_rate=("is_active", "mean"),
+            avg_monthly_spend=("monthly_spend", "mean"),
+            avg_tenure_days=("tenure_days", "mean"),
+            avg_watch_decline=("watch_decline_ratio", "mean"),
+            avg_engagement_ratio=("engagement_ratio_7v30", "mean"),
+            avg_watch_last30=("watch_last_30d", "mean"),
         )
         .reset_index()
         .round(3)
@@ -346,10 +377,10 @@ def _plot_content_yield_box(title_df: pd.DataFrame) -> None:
         title_df (pd.DataFrame): Title-level dataframe
     """
     fig, ax = plt.subplots(figsize=(6, 4))
-    data_orig = title_df[
-        title_df["origin_label"] == "Netflix Original"
-    ]["total_sessions"]
-    data_lic  = title_df[title_df["origin_label"] == "Licensed"]["total_sessions"]
+    data_orig = title_df[title_df["origin_label"] == "Netflix Original"][
+        "total_sessions"
+    ]
+    data_lic = title_df[title_df["origin_label"] == "Licensed"]["total_sessions"]
 
     bp = ax.boxplot(
         [data_orig, data_lic],
@@ -363,8 +394,7 @@ def _plot_content_yield_box(title_df: pd.DataFrame) -> None:
         patch.set_alpha(0.75)
 
     ax.set_ylabel("Total Sessions per Title")
-    ax.set_title("Session Yield per Title by Origin",
-                 fontsize=11, fontweight="bold")
+    ax.set_title("Session Yield per Title by Origin", fontsize=11, fontweight="bold")
     ax.grid(axis="y", alpha=0.3)
     st.pyplot(fig)
     plt.close(fig)
@@ -379,12 +409,19 @@ def _plot_content_yield_scatter(title_df: pd.DataFrame) -> None:
     fig, ax = plt.subplots(figsize=(6, 4))
     for origin, color in ORIGIN_COLORS.items():
         sub = title_df[title_df["origin_label"] == origin]
-        ax.scatter(sub["imdb_rating"], sub["total_sessions"],
-                   alpha=0.4, s=20, color=color, label=origin)
+        ax.scatter(
+            sub["imdb_rating"],
+            sub["total_sessions"],
+            alpha=0.4,
+            s=20,
+            color=color,
+            label=origin,
+        )
     ax.set_xlabel("IMDb Rating")
     ax.set_ylabel("Total Sessions")
-    ax.set_title("IMDb Rating vs Session Yield per Title",
-                 fontsize=11, fontweight="bold")
+    ax.set_title(
+        "IMDb Rating vs Session Yield per Title", fontsize=11, fontweight="bold"
+    )
     ax.legend(fontsize=9)
     ax.grid(alpha=0.2)
     st.pyplot(fig)
@@ -400,10 +437,10 @@ def _plot_content_yield_lines(title_df: pd.DataFrame) -> None:
     yield_agg = (
         title_df.groupby(["origin_label", "imdb_bucket"], observed=True)
         .agg(
-            avg_sessions     =("total_sessions",      "mean"),
+            avg_sessions=("total_sessions", "mean"),
             avg_watch_minutes=("total_watch_minutes", "mean"),
-            avg_viewers      =("unique_viewers",      "mean"),
-            title_count      =("movie_id",            "count"),
+            avg_viewers=("unique_viewers", "mean"),
+            title_count=("movie_id", "count"),
         )
         .reset_index()
         .round(1)
@@ -417,13 +454,18 @@ def _plot_content_yield_lines(title_df: pd.DataFrame) -> None:
     ):
         for origin, color in ORIGIN_COLORS.items():
             sub = yield_agg[yield_agg["origin_label"] == origin]
-            ax.plot(sub["imdb_bucket"].astype(str), sub[metric],
-                    marker="o", linewidth=2.5, markersize=7,
-                    color=color, label=origin)
+            ax.plot(
+                sub["imdb_bucket"].astype(str),
+                sub[metric],
+                marker="o",
+                linewidth=2.5,
+                markersize=7,
+                color=color,
+                label=origin,
+            )
         ax.set_xlabel("IMDb Rating Bucket")
         ax.set_ylabel(label)
-        ax.set_title(f"{label} by Quality Tier",
-                     fontsize=11, fontweight="bold")
+        ax.set_title(f"{label} by Quality Tier", fontsize=11, fontweight="bold")
         ax.legend(fontsize=9)
         ax.grid(alpha=0.25)
     st.pyplot(fig)
@@ -454,8 +496,15 @@ def render_content_yield(title_df: pd.DataFrame) -> None:
     top_titles = (
         title_df.sort_values("total_sessions", ascending=False)
         .head(15)[
-            ["title", "origin_label", "imdb_rating", "genre_primary",
-             "total_sessions", "unique_viewers", "avg_completion"]
+            [
+                "title",
+                "origin_label",
+                "imdb_rating",
+                "genre_primary",
+                "total_sessions",
+                "unique_viewers",
+                "avg_completion",
+            ]
         ]
         .round(2)
         .reset_index(drop=True)
@@ -472,39 +521,54 @@ def render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
         title_df (pd.DataFrame): Title-level dataframe
     """
     st.subheader("4️⃣ Genre Breakdown by Origin Type")
-    st.caption("Where do Netflix Originals outperform licensed content at the genre level?")
+    st.caption(
+        "Where do Netflix Originals outperform licensed content at the genre level?"
+    )
 
     genre_agg = (
         df.groupby(["origin_label", "genre_primary"], observed=True)
         .agg(
-            avg_completion=("progress_percentage",    "mean"),
-            avg_duration  =("watch_duration_minutes", "mean"),
-            sessions      =("session_id",             "count"),
+            avg_completion=("progress_percentage", "mean"),
+            avg_duration=("watch_duration_minutes", "mean"),
+            sessions=("session_id", "count"),
         )
         .reset_index()
         .round(2)
     )
 
     pivot_completion = genre_agg.pivot_table(
-        index="genre_primary", columns="origin_label",
-        values="avg_completion", aggfunc="mean",
+        index="genre_primary",
+        columns="origin_label",
+        values="avg_completion",
+        aggfunc="mean",
     ).round(1)
 
-    if "Netflix Original" in pivot_completion.columns and "Licensed" in pivot_completion.columns:
+    if (
+        "Netflix Original" in pivot_completion.columns
+        and "Licensed" in pivot_completion.columns
+    ):
         pivot_completion["gap (Orig − Lic)"] = (
             pivot_completion["Netflix Original"] - pivot_completion["Licensed"]
         ).round(1)
-        pivot_completion = pivot_completion.sort_values("gap (Orig − Lic)", ascending=False)
+        pivot_completion = pivot_completion.sort_values(
+            "gap (Orig − Lic)", ascending=False
+        )
 
     fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_completion) * 0.45)))
     sns.heatmap(
-        pivot_completion, ax=ax, annot=True, fmt=".1f",
-        cmap="RdYlGn", center=0,
-        linewidths=0.4, cbar_kws={"label": "Avg Completion %"},
+        pivot_completion,
+        ax=ax,
+        annot=True,
+        fmt=".1f",
+        cmap="RdYlGn",
+        center=0,
+        linewidths=0.4,
+        cbar_kws={"label": "Avg Completion %"},
     )
     ax.set_title(
         "Completion % by Genre × Origin  (gap = Original − Licensed)",
-        fontsize=11, fontweight="bold",
+        fontsize=11,
+        fontweight="bold",
     )
     ax.set_xlabel("")
     ax.set_ylabel("Genre")
@@ -519,16 +583,27 @@ def render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
         .reset_index()
     )
     pivot_count = title_counts.pivot_table(
-        index="genre_primary", columns="origin_label",
-        values="title_count", aggfunc="sum", fill_value=0,
+        index="genre_primary",
+        columns="origin_label",
+        values="title_count",
+        aggfunc="sum",
+        fill_value=0,
     )
 
     fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_count) * 0.45)))
-    sns.heatmap(pivot_count, ax=ax, annot=True, fmt=".0f", cmap="Blues",
-                linewidths=0.4, cbar_kws={"label": "Number of Titles"})
+    sns.heatmap(
+        pivot_count,
+        ax=ax,
+        annot=True,
+        fmt=".0f",
+        cmap="Blues",
+        linewidths=0.4,
+        cbar_kws={"label": "Number of Titles"},
+    )
     ax.set_title(
         "Title Count by Genre × Origin  (volume vs quality trade-off)",
-        fontsize=11, fontweight="bold",
+        fontsize=11,
+        fontweight="bold",
     )
     ax.set_xlabel("")
     ax.tick_params(axis="x", rotation=0)

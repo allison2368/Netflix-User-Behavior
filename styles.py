@@ -1,8 +1,14 @@
+"""
+Global and specific CSS styles for the Netflix Churn Prediction Dashboard.
+Includes theme colors, landing page background, and custom button styles.
+"""
+
 import streamlit as st
 
 def apply_global_styles():
     """Applies global Netflix-themed CSS styles across the entire application."""
-    st.markdown("""
+    st.markdown(
+        """
     <style>
         /* Netflix theme colors */
         :root {
@@ -93,11 +99,15 @@ def apply_global_styles():
             background-color: #E50914;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
 
 def apply_landing_styles():
     """Applies Bridgerton-inspired elegant CSS for the 'Who's Watching?' landing page."""
-    st.markdown("""
+    st.markdown(
+        """
     <style>
         /* Hide sidebar */
         [data-testid="stSidebar"] {
@@ -107,8 +117,10 @@ def apply_landing_styles():
         /* Bridgerton-inspired elegant background */
         .stApp {
             background:
-                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(139, 69, 19, 0.03) 35px, rgba(139, 69, 19, 0.03) 70px),
-                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(75, 0, 130, 0.03) 35px, rgba(75, 0, 130, 0.03) 70px),
+                repeating-linear-gradient(45deg, transparent, transparent 35px, 
+                rgba(139, 69, 19, 0.03) 35px, rgba(139, 69, 19, 0.03) 70px),
+                repeating-linear-gradient(-45deg, transparent, transparent 35px, 
+                rgba(75, 0, 130, 0.03) 35px, rgba(75, 0, 130, 0.03) 70px),
                 radial-gradient(circle at 30% 20%, rgba(75, 0, 130, 0.2) 0%, transparent 50%),
                 radial-gradient(circle at 70% 80%, rgba(139, 69, 19, 0.2) 0%, transparent 50%),
                 linear-gradient(135deg, #0f0c1d 0%, #1a0e2e 50%, #2d1b3d 100%) !important;
@@ -123,7 +135,8 @@ def apply_landing_styles():
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+            background: radial-gradient(circle at 50% 50%, 
+            rgba(255, 215, 0, 0.05) 0%, transparent 70%);
             z-index: 0;
             pointer-events: none;
         }
@@ -151,11 +164,15 @@ def apply_landing_styles():
             box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3) !important;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
 
 def apply_play_button_styles():
     """Prevents profile play icon buttons from distorting - enforces fixed circular dimensions."""
-    st.markdown("""
+    st.markdown(
+        """
     <style>
         /* Prevent button container from expanding */
         div.stButton {
@@ -204,4 +221,6 @@ def apply_play_button_styles():
             line-height: 1 !important;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )

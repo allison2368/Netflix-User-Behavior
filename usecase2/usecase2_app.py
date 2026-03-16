@@ -9,7 +9,7 @@ Run:
 """
 
 import streamlit as st
-from . import usecase2 as uc2 # Import logic module
+from . import usecase2 as uc2  # Import logic module
 
 st.set_page_config(
     page_title="Content Investment · Sarah",
@@ -28,24 +28,21 @@ def run_usecase_2():
     st.divider()
 
     df_raw, title_df_raw = uc2.load_data()
-    df, title_df         = uc2.preprocess(df_raw.copy(), title_df_raw.copy())
+    df, title_df = uc2.preprocess(df_raw.copy(), title_df_raw.copy())
 
     # Sidebar filters
     st.sidebar.header("🎛️ Filters")
 
-    genres     = sorted(df["genre_primary"].dropna().unique())
+    genres = sorted(df["genre_primary"].dropna().unique())
     sel_genres = st.sidebar.multiselect("Genre", genres, default=genres)
 
-    plans     = sorted(df["subscription_plan"].dropna().unique())
+    plans = sorted(df["subscription_plan"].dropna().unique())
     sel_plans = st.sidebar.multiselect("Subscription plan", plans, default=plans)
 
-    origin = st.sidebar.radio(
-        "Content origin", ["All", "Netflix Original", "Licensed"]
-    )
+    origin = st.sidebar.radio("Content origin", ["All", "Netflix Original", "Licensed"])
 
-    mask = (
-        df["genre_primary"].isin(sel_genres)
-        & df["subscription_plan"].isin(sel_plans)
+    mask = df["genre_primary"].isin(sel_genres) & df["subscription_plan"].isin(
+        sel_plans
     )
     if origin != "All":
         mask &= df["origin_label"] == origin

@@ -2,8 +2,10 @@
 Data loading and visualization functions for Netflix Data Dashboard (Use Case 3).
 This module handles BigQuery data retrieval and Matplotlib/Seaborn plotting.
 """
+
 import os
 import matplotlib
+
 matplotlib.use("Agg")  # pylint: disable=wrong-import-position
 import matplotlib.pyplot as plt
 

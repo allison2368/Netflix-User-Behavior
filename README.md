@@ -1,6 +1,11 @@
 ![Build](https://github.com/allison2368/Netflix-User-Behavior/actions/workflows/lint.yml/badge.svg)
 
+
+ <img width="400" height="160" alt="image" src="https://github.com/user-attachments/assets/e02f2739-74d0-4555-b18a-79e57d62173d" />
+
 # Netflix-User-Behavior
+
+
 
 Our project introduces an interactive tool designed to support the Netflix platform. Aimed at marketing strategists, product managers, and content executives, the tool helps teams understand subscriber behavior, monitor engagement, and make informed decisions about content and features.
 

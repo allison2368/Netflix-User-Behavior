@@ -302,6 +302,33 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
 
     print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
 
+def load_artifacts(path: str) -> dict:
+    """
+    Load all pickle artifacts from a directory.
+
+    Args:
+        path (str): Directory containing saved model artifacts.
+
+    Returns:
+        dict: Dictionary where keys are artifact names and values are loaded objects.
+    """
+    if not os.path.isdir(path):
+        raise FileNotFoundError(f"Artifact directory not found: {path}")
+
+    artifacts = {}
+
+    for file_name in os.listdir(path):
+        if file_name.endswith(".pkl"):
+            artifact_name = file_name.replace(".pkl", "")
+            file_path = os.path.join(path, file_name)
+
+            with open(file_path, "rb") as file:
+                artifacts[artifact_name] = pickle.load(file)
+
+    if not artifacts:
+        raise ValueError(f"No .pkl artifacts found in {path}")
+
+    return artifacts
 
 # main function to run everything
 def main():

@@ -7,5 +7,8 @@ requires-python = ">=3.14"
 
 [tool.pylint.MASTER]
 # Add project root to path so "churn_model" imports resolve when running pylint from repo root
-init-hook = "import sys, os; sys.path.insert(0, os.getcwd())"
+#init-hook = "import sys, os; sys.path.insert(0, os.getcwd())"
+init-hook = "import sys; from pathlib import Path; sys.path.append(str(Path.cwd()))"
 
+[tool.pylint.MAIN]
+source-roots = ["."]

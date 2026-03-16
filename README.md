@@ -85,14 +85,64 @@ conda activate netflix-env
 conda deactivate
 ```
 
-## Directory Summary
+## Repository Structure
 
-
+```
+Netflix-User-Behavior/
+├── .github/
+│   └── workflows/
+│       └── lint.yml
+├── churn_model/
+│   ├── churn_model.ipynb
+│   └── churn_model_updated.py
+├── docs/
+│   ├── Component-Specification.md
+│   ├── Functional-Specification.md
+│   ├── Milestones.md
+│   ├── Images/
+│   └── technology_review/
+│       ├── demo/
+│       └── technology_review.md
+├── examples/
+│   └── readme.md
+├── tests/
+│   └── unit/
+│       ├── test_model_usecase1.py
+│       ├── test_use_case_2.py
+│       ├── test_usecase3.py
+│       └── test_usecase3_app.py
+├── usecase1/
+│   ├── usecase1.py
+│   └── usecase1_app.py
+├── usecase2/
+│   ├── usecase2.py
+│   └── usecase2_app.py
+├── usecase3/
+│   ├── usecase3.py
+│   └── usecase3_app.py
+├── dashboard.py
+├── environment.yml
+├── landing.py
+├── pyproject.toml
+├── pytest.ini
+├── requirements.txt
+└── styles.py
+```
 
 ## Guide for Using the Tool
 
 Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
+
+To run the dashboard locally:
+```bash
+conda activate netflix-env
+```
+```bash
+streamlit run dashboard.py
+```
+
 ## Project Demo
+
 View the demo video for a walkthrough of the project. 
 
 

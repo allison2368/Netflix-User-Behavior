@@ -5,7 +5,7 @@ Includes unit, edge, and integration tests for Use Case 2.
 """
 import pandas as pd
 
-from usecase2 import preprocess
+from usecase2.usecase2 import preprocess
 
 def test_preprocess_creates_columns():
     """Test preprocess creates derived columns."""

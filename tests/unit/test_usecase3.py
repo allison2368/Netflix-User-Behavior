@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest  # pylint: disable=import-error
 
-import usecase3 as uc3
+import usecase3.usecase3 as uc3
 
 # Unit Tests for Calculation Logic
 

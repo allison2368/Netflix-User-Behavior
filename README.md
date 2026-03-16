@@ -21,7 +21,7 @@ Our project introduces an interactive tool designed to support the Netflix platf
 - [Our Goal](#our-goal)
 - [Data Sources](#data-sources)
 - [Software Dependencies and License Information](#software-dependencies-and-license-information)
-- [Directory Summary](#directory-summary)
+- [Repository Structure](#repository-structure)
 - [Guide for Using the Tool](#guide-for-using-the-tool)
 - [Project Demo](#project-demo)
 

@@ -4,6 +4,10 @@ Unit tests for use_case_2_app.py functions.
 Includes unit, edge, and integration tests for Use Case 2.
 """
 import pandas as pd
+<<<<<<< HEAD
+=======
+import pytest  # pylint: disable=import-error
+>>>>>>> c131e4767173ccad8000de6ddad327b284f6803a
 
 from usecase2 import preprocess
 

@@ -1,6 +1,8 @@
-import dash
-from dash import dash_table, dcc, html, Input, Output, State
-from dash.dependencies import Input, Output, State, MATCH, ALL
+"""Dash demo app for customer and content analytics."""
+# pylint: disable=duplicate-code
+
+import dash  # pylint: disable=import-error
+from dash import dash_table, dcc, html, Input, Output, State, ALL  # pylint: disable=import-error
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
@@ -106,6 +108,7 @@ app.layout = html.Div([
     Input("analysis-type", "value")
 )
 def update_controls(analysis_type):
+    """Return dynamic controls for churn or content analysis."""
     if analysis_type == "churn":
         return html.Div([
             html.Label("Select churn probability threshold (%)"),
@@ -115,19 +118,18 @@ def update_controls(analysis_type):
                 marks={i: str(i) for i in range(0, 101, 20)}
             )
         ])
-    else:
-        return html.Div([
-            html.Label("Minimum IMDb Rating"),
-            dcc.Slider(
-                id={"type": "threshold-slider", "analysis": "content"},
-                min=0, max=10, step=0.1, value=8.0,
-                marks={i: str(i) for i in range(0, 11)}
-            )
-        ])
+    return html.Div([
+        html.Label("Minimum IMDb Rating"),
+        dcc.Slider(
+            id={"type": "threshold-slider", "analysis": "content"},
+            min=0, max=10, step=0.1, value=8.0,
+            marks={i: str(i) for i in range(0, 11)}
+        )
+    ])
 
 # -----------------------
 # Update table + metric
-# ----------------------- 
+# -----------------------
 @app.callback(
     Output("metric-output", "children"),
     Output("result-table", "data"),
@@ -136,36 +138,23 @@ def update_controls(analysis_type):
     Input({"type": "threshold-slider", "analysis": ALL}, "value"),
 )
 def update_results(analysis_type, slider_values):
-
-    # If no slider exists yet (initial load) 
-    if not slider_values: 
+    """Compute metric and table data from analysis type and slider."""
+    if not slider_values:
         return "", [], []
-    
-    # Get slider values safely
+
     slider_value = slider_values[0]
-    # -----------------------
-    # CHURN ANALYSIS 
-    # ----------------------- 
-    if analysis_type == "churn": 
-        threshold = slider_value / 100 
-        filtered = users[users["churn_probability"] >= threshold] 
-
-        metric = f"High Risk Users: {len(filtered)}" 
-        columns = [{"name": c, "id": c} for c in filtered.columns] 
-
-        return metric, filtered.to_dict("records"), columns 
-    
-    # ----------------------- 
-    # CONTENT ANALYSIS 
-    # ----------------------- 
-    else: 
-        rating_threshold = slider_value 
-        filtered = movies[movies["imdb_rating"] >= rating_threshold] 
-
-        metric = f"Movies Above Rating Threshold: {len(filtered)}" 
-        columns = [{"name": c, "id": c} for c in filtered.columns] 
-
+    if analysis_type == "churn":
+        threshold = slider_value / 100
+        filtered = users[users["churn_probability"] >= threshold]
+        metric = f"High Risk Users: {len(filtered)}"
+        columns = [{"name": c, "id": c} for c in filtered.columns]
         return metric, filtered.to_dict("records"), columns
+
+    rating_threshold = slider_value
+    filtered = movies[movies["imdb_rating"] >= rating_threshold]
+    metric = f"Movies Above Rating Threshold: {len(filtered)}"
+    columns = [{"name": c, "id": c} for c in filtered.columns]
+    return metric, filtered.to_dict("records"), columns
 
 
 # -----------------------
@@ -177,7 +166,8 @@ def update_results(analysis_type, slider_values):
     State("result-table", "data"),
     prevent_initial_call=True
 )
-def download_csv(n_clicks, table_data):
+def download_csv(_n_clicks, table_data):
+    """Build CSV download from current table data."""
     df = pd.DataFrame(table_data)
     return dcc.send_data_frame(df.to_csv, "filtered_data.csv", index=False)
 

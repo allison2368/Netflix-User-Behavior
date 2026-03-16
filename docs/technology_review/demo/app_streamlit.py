@@ -1,3 +1,5 @@
+"""Streamlit demo app for customer and content analytics."""
+
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -9,6 +11,7 @@ st.title("Customer & Content Analytics Dashboard")
 # -----------------------
 @st.cache_data
 def load_data():
+    """Load users and movies sample data from CSV."""
     users = pd.read_csv("data/cleaned/users.csv").head(100)
     movies = pd.read_csv("data/cleaned/movies.csv").head(100)
     return users, movies

@@ -3,20 +3,17 @@ churn_model_updated.py — All-in-one Netflix Churn Prediction Training Script
 
 Just run: python churn_model_updated.py
 """
-import io
 import os
 import pickle
 import pandas as pd
 import numpy as np
 from google.cloud import bigquery
-# pylint: disable=no-name-in-module
-from google.cloud import storage
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score, recall_score, f1_score
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE  # pylint: disable=import-error
 
 # config
 # BigQuery settings
@@ -164,13 +161,12 @@ def train_model(df):
     # Prepare features
     x, y, feature_names = prepare_features(df)
 
-    
     # Only stratify if both classes have enough samples
     if y.nunique() > 1 and min(y.value_counts()) > 1:
         stratify = y
     else:
-         stratify = None 
-    x_train, x_test, y_train, y_test = train_test_split(x,y,
+        stratify = None
+    x_train, x_test, y_train, y_test = train_test_split(x, y,
         test_size=TEST_SIZE,
         random_state=RANDOM_STATE,
         stratify=stratify)
@@ -266,7 +262,7 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
         kmeans (KMeans): Trained K-Means segmentation model.
         segment_profile (pandas.DataFrame): Aggregated feature summary for each segment.
     """
-        # Save locally
+    # Save locally
     os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
 
     # Save pickle files
@@ -302,6 +298,33 @@ def save_artifacts(result, scaler_rfe, kmeans, segment_profile):
 
     print(f"✓ Saved to: {MODEL_SAVE_DIR}/")
 
+def load_artifacts(path: str) -> dict:
+    """
+    Load all pickle artifacts from a directory.
+
+    Args:
+        path (str): Directory containing saved model artifacts.
+
+    Returns:
+        dict: Dictionary where keys are artifact names and values are loaded objects.
+    """
+    if not os.path.isdir(path):
+        raise FileNotFoundError(f"Artifact directory not found: {path}")
+
+    artifacts = {}
+
+    for file_name in os.listdir(path):
+        if file_name.endswith(".pkl"):
+            artifact_name = file_name.replace(".pkl", "")
+            file_path = os.path.join(path, file_name)
+
+            with open(file_path, "rb") as file:
+                artifacts[artifact_name] = pickle.load(file)
+
+    if not artifacts:
+        raise ValueError(f"No .pkl artifacts found in {path}")
+
+    return artifacts
 
 # main function to run everything
 def main():

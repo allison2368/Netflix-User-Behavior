@@ -2,6 +2,7 @@
 Main Dashboard Entry Point for the Netflix Churn Prediction Project.
 Handles user routing, sidebar navigation, and global layout.
 """
+# pylint: disable=too-many-nested-blocks
 
 import pandas as pd
 import streamlit as st
@@ -30,13 +31,13 @@ def load_model_artifacts():
     Returns the loaded dictionary or stops execution on failure.
     """
     try:
-        # Configuration for USE_GCS can be maintained at the top of the source file
         return cm.load_artifacts("./model_outputs")
-    except Exception:
+    except (FileNotFoundError, OSError, ValueError, TypeError):
         st.error("Model artifacts not found.")
         st.stop()
 
-def main():
+
+def main():  # pylint: disable=too-many-branches,too-many-statements
     """Main execution function to handle user session and dashboard routing."""
     # Initialize session state for user selection
     if "selected_user" not in st.session_state:
@@ -60,7 +61,8 @@ def main():
         # Netflix logo higher up, Home button centered below it
         st.sidebar.markdown(
             "<div style='text-align: center; margin-top: 0; padding-top: 0.25rem;'>"
-            "<h2 style='color:#E50914; margin-bottom: 0.5rem; font-size: 3.0rem;'>NETFLIX</h2></div>",
+            "<h2 style='color:#E50914; margin-bottom: 0.5rem; font-size: 3.0rem;'>"
+            "NETFLIX</h2></div>",
             unsafe_allow_html=True,
         )
         _c1, _c2, _c3 = st.sidebar.columns([1, 2, 1])
@@ -118,7 +120,10 @@ def main():
                     {"Metric": "Accuracy", "Value": f"{metrics.get('accuracy', 0):.4f}"},
                     {"Metric": "Recall", "Value": f"{metrics.get('recall', 0):.4f}"},
                     {"Metric": "F1 Score", "Value": f"{metrics.get('f1_score', 0):.4f}"},
-                    {"Metric": "Prediction threshold", "Value": f"{metrics.get('threshold', 0):.2f}"},
+                    {
+                        "Metric": "Prediction threshold",
+                        "Value": f"{metrics.get('threshold', 0):.2f}",
+                    },
                 ])
                 st.dataframe(
                     summary,
@@ -145,13 +150,27 @@ def main():
                         fi_df = fi_df.rename(columns=rename_map)
                     if "Feature" not in fi_df.columns:
                         if len(fi_df.columns) >= 2:
-                            fi_df = fi_df.rename(columns={fi_df.columns[0]: "Feature", fi_df.columns[1]: "Importance"})
+                            fi_df = fi_df.rename(
+                                columns={
+                                    fi_df.columns[0]: "Feature",
+                                    fi_df.columns[1]: "Importance",
+                                }
+                            )
                         else:
                             fi_df = fi_df.reset_index()
-                            fi_df = fi_df.rename(columns={fi_df.columns[0]: "Feature", fi_df.columns[1]: "Importance"})
+                            fi_df = fi_df.rename(
+                                columns={
+                                    fi_df.columns[0]: "Feature",
+                                    fi_df.columns[1]: "Importance",
+                                }
+                            )
                     if "Importance" not in fi_df.columns and len(fi_df.columns) >= 2:
-                        fi_df = fi_df.rename(columns={fi_df.columns[1]: "Importance"})
-                    fi_df["Importance"] = pd.to_numeric(fi_df["Importance"], errors="coerce").fillna(0)
+                        fi_df = fi_df.rename(
+                            columns={fi_df.columns[1]: "Importance"}
+                        )
+                    fi_df["Importance"] = pd.to_numeric(
+                        fi_df["Importance"], errors="coerce"
+                    ).fillna(0)
                     fi_df.insert(0, "Rank", range(1, len(fi_df) + 1))
                     fi_df = fi_df[["Rank", "Feature", "Importance"]]
                     fi_df["Importance"] = fi_df["Importance"].map(lambda x: f"{x:.4f}")

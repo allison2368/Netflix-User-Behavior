@@ -89,7 +89,7 @@ def apply_global_styles():
             transform: scale(1.05);
         }
 
-        /* Landing profile buttons: override size/style when #landing-marker exists (same block = wins over rule above) */
+        /* Landing profile buttons: override when #landing-marker exists */
         #landing-marker ~ * .stButton > button {
             width: 420px !important;
             height: 420px !important;
@@ -153,7 +153,9 @@ def apply_global_styles():
 
 
 def apply_landing_styles():
-    """Landing page: black background, hide sidebar, tighten column spacing. Button size is set in apply_global_styles()."""
+    """Landing: black background, hide sidebar, column spacing.
+    Button size is set in apply_global_styles().
+    """
     st.markdown(
         """
     <style>

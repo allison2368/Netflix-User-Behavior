@@ -1,11 +1,8 @@
 ![Build](https://github.com/allison2368/Netflix-User-Behavior/actions/workflows/lint.yml/badge.svg)
 
-
  <img width="400" height="160" alt="image" src="https://github.com/user-attachments/assets/e02f2739-74d0-4555-b18a-79e57d62173d" />
 
 # Netflix-User-Behavior
-
-
 
 Our project introduces an interactive tool designed to support the Netflix platform. Aimed at marketing strategists, product managers, and content executives, the tool helps teams understand subscriber behavior, monitor engagement, and make informed decisions about content and features.
 
@@ -42,9 +39,9 @@ Our project introduces an interactive tool designed to support the Netflix platf
 - Work with large, messy data and understand its tradeoff.
 - We will start from analyzing user behavior with Netflix data, and if possible, compare subscriptions and movies/shows with different platforms.
 
-### Specific goals 
+### Specific goals
 
-We have three main use cases for our app, each use case corresponds to a different industry role.  
+We have three main use cases for our app, each use case corresponds to a different industry role.
 
 1. Marketing Manager: Identify and export high-risk churners for targeted discounts
 2. Studio Executive: Optimizing content investment using movie ratings
@@ -62,7 +59,7 @@ Link: [View Dataset](https://www.kaggle.com/datasets/sayeeduddin/netflix-2025use
 
 Movie ratings were supplemented using the OMDb API; missing ratings for certain synthetic titles were imputed by genre to ensure a complete dataset for analysis.
 
-Link: [View Dataset](https://www.omdbapi.com/) 
+Link: [View Dataset](https://www.omdbapi.com/)
 
 ## Software Dependencies and License Information
 
@@ -72,13 +69,13 @@ The project is built using Python 3.0+ and several open-source Python packages s
 
 This project uses a virtual environment to ensure all collaborators run the same Python version and dependencies. After cloning the repository, create a new environment and activate it. Further instructions for running our app locally are in the examples folder.
 
-
 #### 1. Create a new environment
 
 ```bash
 conda env create -f environment.yml
 ```
-#### 2. Activate the environment 
+
+#### 2. Activate the environment
 
 ```bash
 conda activate netflix-env
@@ -138,9 +135,18 @@ Netflix-User-Behavior/
 
 Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
 
+## Code Coverage and Unit tests
+
+To check our passing pytest unit tests, run:
+
+```bash
+pytest tests/
+```
+
+All tests should pass
+
+Unit test code coverage: 76% across all backend .py code
+
 ## Project Demo
 
-View the demo video for a walkthrough of the project. 
-
-
-
+View the demo video for a walkthrough of the project.

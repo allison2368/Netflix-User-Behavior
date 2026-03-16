@@ -42,7 +42,7 @@ def show_landing_page():
     st.markdown(title_html, unsafe_allow_html=True)
 
     # Profile selection: plain red square above each name; spacer columns center the four users
-    spacer_l, col1, col2, col3, col4, spacer_r = st.columns([1.5, 1, 1, 1, 1, 1])
+    _spacer_l, col1, col2, col3, col4, _spacer_r = st.columns([1.5, 1, 1, 1, 1, 1])
     profiles = [
         {"key": "marcus", "name": "Marcus", "role": "Marketing Manager", "col": col1},
         {"key": "sarah", "name": "Sarah", "role": "Content Executive", "col": col2},

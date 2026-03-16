@@ -124,7 +124,7 @@ def render_kpis(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
         df (pd.DataFrame): Session-level dataframe
         title_df (pd.DataFrame): Title-level dataframe
     """
-    st.subheader("📊 Portfolio Overview")
+    st.subheader("Portfolio Overview")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
     n_orig = title_df["is_netflix_original"].sum()
     n_licensed = (~title_df["is_netflix_original"]).sum()
@@ -149,7 +149,7 @@ def render_quality_origin(df: pd.DataFrame) -> None:
     Args:
         df (pd.DataFrame): Session-level dataframe
     """
-    st.subheader("1️⃣ Quality Tier × Origin Type → Retention")
+    st.subheader("1. Quality Tier × Origin Type → Retention")
     st.caption(
         "Does high-rated content drive more engagement, "
         "and does origin type amplify that effect?"
@@ -221,7 +221,7 @@ def render_quality_origin(df: pd.DataFrame) -> None:
         aggfunc="mean",
     ).round(1)
 
-    fig, ax = plt.subplots(figsize=(5, 4))
+    fig, ax = plt.subplots(figsize=(3, 2))
     sns.heatmap(
         pivot,
         ax=ax,
@@ -240,7 +240,7 @@ def render_quality_origin(df: pd.DataFrame) -> None:
     st.pyplot(fig)
     plt.close(fig)
 
-    with st.expander("📋 Full table"):
+    with st.expander("Full table"):
         st.dataframe(agg.round(2), use_container_width=True)
 
 
@@ -340,7 +340,7 @@ def render_subscriber_health(df: pd.DataFrame) -> None:
     Args:
         df (pd.DataFrame): Session-level dataframe.
     """
-    st.subheader("2️⃣ High-Rated Originals vs Licensed → Subscriber Health")
+    st.subheader("2. High-Rated Originals vs Licensed → Subscriber Health")
     st.caption(
         "Among users who watch high-rated content (IMDb ≥ 7), "
         "do Netflix Originals produce healthier subscribers?"
@@ -365,8 +365,11 @@ def render_subscriber_health(df: pd.DataFrame) -> None:
 
     _render_kpi_cards(health)
     st.divider()
-    _plot_health_bar_chart(health)
-    _plot_active_rate_by_bucket(df)
+    col_health, col_active = st.columns(2)
+    with col_health:
+        _plot_health_bar_chart(health)
+    with col_active:
+        _plot_active_rate_by_bucket(df)
 
 
 # Analysis 3
@@ -478,7 +481,7 @@ def render_content_yield(title_df: pd.DataFrame) -> None:
     Args:
         title_df (pd.DataFrame): Title-level dataframe.
     """
-    st.subheader("3️⃣ Content Yield per Title")
+    st.subheader("3. Content Yield per Title")
     st.caption(
         "Which titles punch above their weight? Sessions and watch minutes per title, "
         "by origin and quality."
@@ -520,7 +523,7 @@ def render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
         df (pd.DataFrame): Session-level dataframe
         title_df (pd.DataFrame): Title-level dataframe
     """
-    st.subheader("4️⃣ Genre Breakdown by Origin Type")
+    st.subheader("4. Genre Breakdown by Origin Type")
     st.caption(
         "Where do Netflix Originals outperform licensed content at the genre level?"
     )
@@ -554,28 +557,31 @@ def render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
             "gap (Orig − Lic)", ascending=False
         )
 
-    fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_completion) * 0.45)))
-    sns.heatmap(
-        pivot_completion,
-        ax=ax,
-        annot=True,
-        fmt=".1f",
-        cmap="RdYlGn",
-        center=0,
-        linewidths=0.4,
-        cbar_kws={"label": "Avg Completion %"},
-    )
-    ax.set_title(
-        "Completion % by Genre × Origin  (gap = Original − Licensed)",
-        fontsize=11,
-        fontweight="bold",
-    )
-    ax.set_xlabel("")
-    ax.set_ylabel("Genre")
-    ax.tick_params(axis="x", rotation=0)
-    ax.tick_params(axis="y", rotation=0)
-    st.pyplot(fig)
-    plt.close(fig)
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+        fig, ax = plt.subplots(figsize=(4, max(3, len(pivot_completion) * 0.35)))
+        sns.heatmap(
+            pivot_completion,
+            ax=ax,
+            annot=True,
+            fmt=".1f",
+            cmap="RdYlGn",
+            center=0,
+            linewidths=0.4,
+            cbar_kws={"label": "Avg Completion %"},
+        )
+        ax.set_title(
+            "Completion % by Genre × Origin  (gap = Original − Licensed)",
+            fontsize=11,
+            fontweight="bold",
+        )
+        ax.set_xlabel("")
+        ax.set_ylabel("Genre")
+        ax.tick_params(axis="x", rotation=0)
+        ax.tick_params(axis="y", rotation=0)
+        st.pyplot(fig)
+        plt.close(fig)
 
     title_counts = (
         title_df.groupby(["origin_label", "genre_primary"], observed=True)
@@ -590,26 +596,27 @@ def render_genre_origin(df: pd.DataFrame, title_df: pd.DataFrame) -> None:
         fill_value=0,
     )
 
-    fig, ax = plt.subplots(figsize=(8, max(5, len(pivot_count) * 0.45)))
-    sns.heatmap(
-        pivot_count,
-        ax=ax,
-        annot=True,
-        fmt=".0f",
-        cmap="Blues",
-        linewidths=0.4,
-        cbar_kws={"label": "Number of Titles"},
-    )
-    ax.set_title(
-        "Title Count by Genre × Origin  (volume vs quality trade-off)",
-        fontsize=11,
-        fontweight="bold",
-    )
-    ax.set_xlabel("")
-    ax.tick_params(axis="x", rotation=0)
-    ax.tick_params(axis="y", rotation=0)
-    st.pyplot(fig)
-    plt.close(fig)
+    with col_right:
+        fig, ax = plt.subplots(figsize=(4, max(3, len(pivot_count) * 0.35)))
+        sns.heatmap(
+            pivot_count,
+            ax=ax,
+            annot=True,
+            fmt=".0f",
+            cmap="Blues",
+            linewidths=0.4,
+            cbar_kws={"label": "Number of Titles"},
+        )
+        ax.set_title(
+            "Title Count by Genre × Origin  (volume vs quality trade-off)",
+            fontsize=11,
+            fontweight="bold",
+        )
+        ax.set_xlabel("")
+        ax.tick_params(axis="x", rotation=0)
+        ax.tick_params(axis="y", rotation=0)
+        st.pyplot(fig)
+        plt.close(fig)
 
-    with st.expander("📋 Full genre breakdown"):
+    with st.expander("Full genre breakdown"):
         st.dataframe(genre_agg, use_container_width=True)

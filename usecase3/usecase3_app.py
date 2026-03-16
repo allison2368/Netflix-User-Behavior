@@ -12,8 +12,10 @@ def run_usecase_3():
     Executes the Use Case 3: Churn Driver Diagnosis dashboard logic.
     """
     st.set_page_config(layout="wide")  # wide theme
-    st.header("🔍 Why users leave?")
-
+    st.title("What Causes Churn?")
+    st.markdown("**Puja's question:** What are the underperforming platform features causing user frustration?")
+    st.divider()
+	
     # Initialize session state
     if "detail_view" not in st.session_state:
         st.session_state.detail_view = "Main"
@@ -21,8 +23,15 @@ def run_usecase_3():
     with st.spinner("Fetching latest metrics..."):
         churn_val, bounce_val, search_val = uc3.get_summary_metrics()
 
-    # Divide main layout
-    left_col, right_col = st.columns([1, 5])
+    # Divide main layout: left stats, vertical separator, right content
+    left_col, line_col, right_col = st.columns([1, 0.02, 5])
+
+    # Vertical line between Key Stats and graph
+    with line_col:
+        st.markdown(
+            '<div style="border-left: 2px solid #564d4d; min-height: 65vh; margin: 0;"></div>',
+            unsafe_allow_html=True,
+        )
 
     # Left column: buttons for charts
     with left_col:
@@ -32,17 +41,17 @@ def run_usecase_3():
         st.metric("Search Fail", f"{search_val:.1f}%")
 
         st.divider()
-        st.write("More Insights")
+        st.markdown("**More Insights**")
 
-        if st.button("⏳ Tenure", use_container_width=True):
+        if st.button("Tenure", use_container_width=True):
             st.session_state.detail_view = "Tenure"
-        if st.button("🎯 Genre", use_container_width=True):
+        if st.button("Genre", use_container_width=True):
             st.session_state.detail_view = "Genre"
-        if st.button("🔎 Search", use_container_width=True):
+        if st.button("Search", use_container_width=True):
             st.session_state.detail_view = "Search"
 
         if st.session_state.detail_view != "Main":
-            if st.button("⬅️ Back", use_container_width=True):
+            if st.button("Back", use_container_width=True):
                 st.session_state.detail_view = "Main"
                 st.rerun()
 
@@ -64,7 +73,7 @@ def run_usecase_3():
 
             with chart_col:
                 st.pyplot(uc3.plot_pm_report(df_bounce), use_container_width=True)
-            with st.expander("💡 Calculation Logic"):
+            with st.expander("Calculation Logic"):
                 st.caption("Bounce Rate = (Views < 5 mins / Total Views) * 100")
 
         elif st.session_state.detail_view == "Search":

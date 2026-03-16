@@ -4,13 +4,16 @@ Displays the 'Who's Watching?' profile selection screen.
 """
 
 import streamlit as st
+
 import styles
 
 
 def show_landing_page():
     """Renders the Netflix-style profile selection landing page."""
-    # Apply landing page styles
-    styles.apply_landing_styles()
+    st.markdown(
+        '<div id="landing-marker" style="display:none" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
 
     # Large Netflix logo section
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -18,7 +21,7 @@ def show_landing_page():
     with col2:
         logo_html = (
             "<div style='text-align: center;'>"
-            "<h1 style='font-size: 4rem; font-weight: 900; color: #E50914; "
+            "<h1 style='font-size: 5rem; font-weight: 900; color: #E50914; "
             'letter-spacing: -0.1rem; font-family: "Bebas Neue", "Impact", '
             "sans-serif; margin: 0; text-shadow: 0 0 20px rgba(229, 9, 20, 0.6), "
             "0 0 40px rgba(229, 9, 20, 0.4), 2px 2px 8px rgba(0, 0, 0, 0.9);'>"
@@ -38,69 +41,29 @@ def show_landing_page():
     )
     st.markdown(title_html, unsafe_allow_html=True)
 
-    # Profile selection grid
-    col1, col2, col3, col4 = st.columns(4)
+    # Profile selection: plain red square above each name; spacer columns center the four users
+    spacer_l, col1, col2, col3, col4, spacer_r = st.columns([1.5, 1, 1, 1, 1, 1])
     profiles = [
-        {
-            "key": "marcus",
-            "emoji": "🎯",
-            "name": "Marcus",
-            "role": "Marketing Manager",
-            "col": col1,
-            "color": "linear-gradient(135deg, #E50914 0%, #B20710 100%)",
-        },
-        {
-            "key": "sarah",
-            "emoji": "📺",
-            "name": "Sarah",
-            "role": "Content Executive",
-            "col": col2,
-            "color": "linear-gradient(135deg, #564d4d 0%, #221f1f 100%)",
-        },
-        {
-            "key": "puja",
-            "emoji": "💡",
-            "name": "Puja",
-            "role": "Product Manager",
-            "col": col3,
-            "color": "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-        },
-        {
-            "key": "admin",
-            "emoji": "📊",
-            "name": "Admin",
-            "role": "Model Performance",
-            "col": col4,
-            "color": "linear-gradient(135deg, #1E90FF 0%, #0066CC 100%)",
-        },
+        {"key": "marcus", "name": "Marcus", "role": "Marketing Manager", "col": col1},
+        {"key": "sarah", "name": "Sarah", "role": "Content Executive", "col": col2},
+        {"key": "puja", "name": "Puja", "role": "Product Manager", "col": col3},
+        {"key": "admin", "name": "Admin", "role": "Model Performance", "col": col4},
     ]
 
     for profile in profiles:
         with profile["col"]:
-            # Profile card UI
-            card_html = (
-                f"<div style='text-align: center; padding: 1rem;'>"
-                f"<div style='width: 140px; height: 140px; margin: 0 auto 1rem; "
-                f"border-radius: 8px; background: {profile['color']}; "
-                f"display: flex; align-items: center; justify-content: center; "
-                f"font-size: 5rem; border: 4px solid rgba(255,215,0,0.3); "
-                f"box-shadow: 0 4px 15px rgba(0,0,0,0.5); "
-                f"transition: all 0.3s ease;'>{profile['emoji']}</div>"
-                f"<div style='color: #808080; font-size: 1.5rem; "
-                f"text-shadow: 1px 1px 4px black; margin-top: 0.5rem;'>"
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            if st.button("👤", key=profile["key"]):
+                st.session_state.selected_user = profile["key"]
+                st.rerun()
+            st.markdown(
+                f"<div style='color: white; font-size: 1.5rem; margin-top: 0.5rem;'>"
                 f"{profile['name']}</div>"
-                f"<div style='color: #565656; font-size: 0.9rem; "
-                f"margin-bottom: 1rem;'>{profile['role']}</div></div>"
+                f"<div style='color: white; font-size: 0.9rem; margin-bottom: 1rem;'>"
+                f"{profile['role']}</div>",
+                unsafe_allow_html=True,
             )
-            st.markdown(card_html, unsafe_allow_html=True)
 
-            # Play button for user selection - Using underscores for unused cols
-            _, col_b, _ = st.columns([1.5, 1, 1.5])
-            with col_b:
-                if st.button("▶️", key=profile["key"]):
-                    st.session_state.selected_user = profile["key"]
-                    st.rerun()
-
-    # Apply play button specific styling at the end to ensure override
-    styles.apply_play_button_styles()
     st.markdown("<br><br>", unsafe_allow_html=True)
+    # Apply landing styles last so they override any Streamlit defaults and the buttons render large
+    styles.apply_landing_styles()

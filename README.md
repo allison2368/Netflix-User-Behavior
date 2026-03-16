@@ -35,41 +35,53 @@ Our project introduces an interactive tool designed to support the Netflix platf
 - Work with large, messy data and understand its tradeoff.
 - We will start from analyzing user behavior with Netflix data, and if possible, compare subscriptions and movies/shows with different platforms.
 
-### Specific goals for Churn Analysis
+### Specific goals 
 
-- Define the Churn Event: Determine what constitutes a churned user (e.g., cancellation of subscription, non-renewal).
-- Calculate the Rate: Calculate the percentage of customers lost over a specific period.
-- Segment Customer Data: Group customers by behavior, demographics, or subscription type to identify which groups are leaving.
-- Identify Patterns: Analyze usage data for trends, such as declining activity or lack of product engagement.
-- Act on Insights: Create targeted campaigns or product improvements to address the specific reasons for attrition. 
+We have three main use cases for our app, each use case corresponds to a different industry role.  
+
+1. Marketing Manager: Identify and export high-risk churners for targeted discounts
+2. Studio Executive: Optimizing content investment using movie ratings
+3. Product Manager: Feature engagement and churn correlation analysis
 
 ## Data Sources
 
-### 1. Netflix Customer Subscription Dataset
-
-Contains information about user subscription plans, billing details, and account status. This dataset helps analyze subscription behavior, user demographics, and potential indicators of churn.
-
-Link: [View Dataset](https://www.kaggle.com/datasets/sureshmuthusamy001p/netflix-customer-subscription)
-
-### 2. Netflix Movies and TV Shows Dataset
-
-Provides metadata about Netflix content, including titles, genres, release year, cast, director, and content type. This dataset supports analysis of content characteristics and their relationship with user engagement and retention.
-
-Link: [View Dataset](https://www.kaggle.com/datasets/shivamb/netflix-shows)
-
-### 3. Netflix 2025 User Behavior Dataset
+### 1. Kaggle Netflix User Behavior
 
 A large synthetic dataset with over 210,000 records capturing user interactions such as watch history, search logs, recommendation activity, and reviews. It enables behavioral analysis, feature engineering, and churn prediction.
 
 Link: [View Dataset](https://www.kaggle.com/datasets/sayeeduddin/netflix-2025user-behavior-dataset-210k-records/data?select=watch_history.csv)
 
-### 4. Movie API
+### 2. Movie API
 
 Movie ratings were supplemented using the OMDb API; missing ratings for certain synthetic titles were imputed by genre to ensure a complete dataset for analysis.
 
+Link: [View Dataset](https://www.omdbapi.com/) 
+
 ## Software Dependencies and License Information
 
-The project is built using Python 3.0+ and several open-source Python packages such as pandas, NumPy, scikit-learn, and Streamlit. The complete list of dependencies can be found in requirements.txt. This project is licensed under the MIT License, with full details available in LICENSE.txt.
+The project is built using Python 3.0+ and several open-source Python packages such as pandas, NumPy, scikit-learn, and Streamlit. The complete list of dependencies can be found in environment.yml. This project is licensed under the MIT License, with full details available in LICENSE.txt.
+
+### Virtual Environment Setup
+
+This project uses a virtual environment to ensure all collaborators run the same Python version and dependencies. 
+
+#### 1. Clone the Repository
+git clone https://github.com/Netflix-User-Behavior.git
+
+cd ~/Netflix-User-Behavior
+
+#### 2. Create a new environment
+conda env create -f environment.yml
+
+#### 3. Activate the environment 
+conda activate netflix-env
+(your terminal should display (netflix-env))
+
+#### 4. Run the application **change this**
+streamlit dashboard_app.py
+
+#### 5. Deactivate environment after finished running app
+conda deactivate
 
 ## Directory Summary
 
@@ -77,6 +89,7 @@ The project is built using Python 3.0+ and several open-source Python packages s
 
 ## Guide for Using the Tool
 
+Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
 ## Project Demo
 View the demo video for a walkthrough of the project. 
 

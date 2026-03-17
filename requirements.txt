@@ -11,6 +11,7 @@ shap
 pytest
 pytest-cov
 coverage
+coverage-badge
 pylint
 python-dotenv
 seaborn

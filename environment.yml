@@ -48,5 +48,6 @@ dependencies:
       - pytest
       - pytest-cov
       - coverage
+      - coverage-badge
       - python-dotenv
 

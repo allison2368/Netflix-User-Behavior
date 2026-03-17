@@ -94,25 +94,39 @@ conda deactivate
 Netflix-User-Behavior/
 ├── .github/
 │   └── workflows/
-│       └── lint.yml
+│       ├── lint.yml
+│       └── coverage.yml
 ├── churn_model/
 │   ├── churn_model.ipynb
 │   └── churn_model_updated.py
 ├── docs/
 │   ├── Component-Specification.md
 │   ├── Functional-Specification.md
+	├── DATA515_NetflixUserBehavior.pdf
 │   ├── Milestones.md
-│   ├── Presentation.pdf
-│   ├── Images/
 │   └── technology_review/
-│       ├── demo/
-│       └── technology_review.md
+│       ├── technology_review.md
+│       └── demo/
+│           ├── app_dash.py
+│           ├── app_streamlit.py
+│           ├── feature_eng.ipynb
+│           ├── machine_learning_demo.ipynb
+│           └── pandas_vs_polars_demo.ipynb
 ├── examples/
 │   └── readme.md
+│   └── DATA515_Final_Demo.mov
+├── model_outputs/
+├── sql_queries/
+│   └── sql_queries_used.txt
 ├── tests/
 │   └── unit/
+│       ├── test_dashboard.py
+│       ├── test_landingpage.py
 │       ├── test_model_usecase1.py
-│       ├── test_use_case_2.py
+│       ├── test_usecase1.py
+│       ├── test_usecase1_app.py
+│       ├── test_usecase2.py
+│       ├── test_usecase2_app.py
 │       ├── test_usecase3.py
 │       └── test_usecase3_app.py
 ├── usecase1/
@@ -125,6 +139,7 @@ Netflix-User-Behavior/
 │   ├── usecase3.py
 │   └── usecase3_app.py
 ├── dashboard.py
+├── data_cleaning.ipynb
 ├── environment.yml
 ├── landing.py
 ├── pyproject.toml
@@ -135,7 +150,7 @@ Netflix-User-Behavior/
 
 ## Guide for Using the Tool
 
-Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
+Head over to the Examples folder for exact instructions on how to run our dashboard locally. Each of the tabs corresponds to a different use case. Switch tabs to gain a new perspective about the netflix data!
 
 ## Code Coverage and Unit tests
 
@@ -145,10 +160,8 @@ To check our passing pytest unit tests, run:
 pytest tests/
 ```
 
-All tests should pass
-
-Unit test code coverage: 76% across all backend .py code
+All tests should pass, with our code coverage reported in the CodeCov badge
 
 ## Project Demo
 
-View the demo video for a walkthrough of the project.
+View the demo video in the Examples folder for a walkthrough of the project.

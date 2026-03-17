@@ -1,4 +1,5 @@
 ![Build](https://github.com/allison2368/Netflix-User-Behavior/actions/workflows/lint.yml/badge.svg)
+![Coverage](https://github.com/allison2368/Netflix-User-Behavior/actions/workflows/coverage.yml/badge.svg)
 
  <img width="400" height="160" alt="image" src="https://github.com/user-attachments/assets/e02f2739-74d0-4555-b18a-79e57d62173d" />
 

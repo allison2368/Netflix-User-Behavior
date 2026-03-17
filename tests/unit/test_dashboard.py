@@ -34,8 +34,8 @@ def test_load_model_artifacts_error_handling():
         # we ensure the test doesn't fail when the app stops.
         try:
             dashboard.load_model_artifacts()
-        except StopException:  
-            # Successfully caught the intentional app stop triggered by st.stop()            
+        except StopException:
+            # Successfully caught the intentional app stop triggered by st.stop()
             pass
 
         # Verify that the file loading was attempted and failed

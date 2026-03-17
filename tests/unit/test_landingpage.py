@@ -60,4 +60,3 @@ def test_landing_marker_div_present():
 
     marker_snippet = 'id="landing-marker"'
     assert any(marker_snippet in block.value for block in at.markdown)
-

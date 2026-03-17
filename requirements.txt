@@ -9,6 +9,8 @@ google-cloud-storage
 imbalanced-learn
 shap
 pytest
+pytest-cov
+coverage
 pylint
 python-dotenv
 seaborn

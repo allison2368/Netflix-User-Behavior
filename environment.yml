@@ -46,5 +46,7 @@ dependencies:
       - imbalanced-learn
       - shap
       - pytest
+      - pytest-cov
+      - coverage
       - python-dotenv
 

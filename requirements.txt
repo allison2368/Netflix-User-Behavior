@@ -12,6 +12,7 @@ pytest
 pytest-cov
 coverage
 coverage-badge
+setuptools
 pylint
 python-dotenv
 seaborn

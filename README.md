@@ -1,5 +1,5 @@
 ![Build](https://github.com/allison2368/Netflix-User-Behavior/actions/workflows/lint.yml/badge.svg)
-[![codecov](https://codecov.io/github/allison2368/Netflix-User-Behavior/graph/badge.svg?token=21YX5MVR5Q)](https://codecov.io/github/allison2368/Netflix-User-Behavior)
+[![codecov](https://codecov.io/github/allison2368/Netflix-User-Behavior/branch/main/graph/badge.svg?token=21YX5MVR5Q)](https://codecov.io/github/allison2368/Netflix-User-Behavior)
 
  <img width="400" height="160" alt="image" src="https://github.com/user-attachments/assets/e02f2739-74d0-4555-b18a-79e57d62173d" />
 

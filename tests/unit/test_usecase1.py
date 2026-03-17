@@ -4,6 +4,8 @@ Test suite for usecase1 module.
 This module contains unit tests for churn prediction functionality,
 including artifact loading, prediction logic, and visualization functions.
 """
+# pylint: disable=too-few-public-methods,consider-using-from-import,duplicate-code
+
 import os
 import pickle
 import tempfile

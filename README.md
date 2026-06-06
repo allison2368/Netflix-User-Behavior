@@ -7,6 +7,8 @@
 
 Our project introduces an interactive tool designed to support the Netflix platform. Aimed at marketing strategists, product managers, and content executives, the tool helps teams understand subscriber behavior, monitor engagement, and make informed decisions about content and features.
 
+[![Dashboard Video Demo](https://img.youtube.com/vi/NeMVtrcU6Rc/0.jpg)](https://www.youtube.com/watch?v=NeMVtrcU6Rc)
+
 ## Team Members
 
 - Allison Peng
